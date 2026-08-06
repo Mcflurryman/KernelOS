@@ -1,7 +1,7 @@
 # Hoja de ruta
 
 1. Base documental y repositorio.
-2. Solución .NET y endpoint de salud.
+2. ~~Solución .NET y endpoint de salud.~~ Completada.
 3. Chat con Ollama.
 4. Historial con SQLite.
 5. Sistema de herramientas.

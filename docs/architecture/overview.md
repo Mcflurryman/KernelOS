@@ -1,14 +1,19 @@
 # Arquitectura de alto nivel
 
-KernelOS organizará las entradas de escritorio, web, Telegram y voz mediante un orquestador central. El orquestador coordinará modelos locales, memoria y herramientas MCP, y devolverá resultados por las salidas adecuadas.
+La primera versión ejecutable se organiza como un monolito modular dentro de una única solución .NET 8. `KernelOS.Api` contiene la API HTTP mínima y depende de los contratos de `KernelOS.Core`, la configuración de dependencias de `KernelOS.Infrastructure` y las abstracciones de `KernelOS.Tools`. `KernelOS.Tests` valida los endpoints y contratos básicos.
+
+Actualmente, la API expone los endpoints de raíz y salud. No existen todavía integraciones de modelos, memoria, herramientas reales ni canales externos.
 
 ```mermaid
 flowchart LR
-  I[Entradas: escritorio, web, Telegram y voz] --> O[Orquestador]
-  O <--> M[Modelos locales]
-  O <--> MEM[Memoria]
-  O <--> MCP[Herramientas MCP]
-  O --> S[Salidas]
+  API[KernelOS.Api] --> CORE[KernelOS.Core]
+  API --> INFRA[KernelOS.Infrastructure]
+  API --> TOOLS[KernelOS.Tools]
+  INFRA --> CORE
+  TOOLS --> CORE
+  TESTS[KernelOS.Tests] --> API
+  TESTS --> CORE
+  TESTS --> TOOLS
 ```
 
-Esta representación es conceptual y no define aún componentes implementados.
+Las futuras entradas, modelos locales, memoria y herramientas controladas se incorporarán como módulos posteriores, conforme a la hoja de ruta.

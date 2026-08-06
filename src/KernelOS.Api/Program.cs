@@ -1,4 +1,5 @@
 using KernelOS.Core;
+using KernelOS.Core.Planning;
 using KernelOS.Api.Contracts;
 using KernelOS.Infrastructure;
 using KernelOS.Tools;
@@ -128,6 +129,23 @@ app.MapPost("/tools/{name}", async (
         ToolExecutionStatus.NotFound => Results.NotFound(result),
         ToolExecutionStatus.Cancelled => Results.Json(result, statusCode: 499),
         _ => Results.Json(result, statusCode: StatusCodes.Status500InternalServerError)
+    };
+});
+
+app.MapPost("/planner/execute", async (PlannerExecuteApiRequest? request, IPlanner planner, CancellationToken cancellationToken) =>
+{
+    if (string.IsNullOrWhiteSpace(request?.Goal) || string.IsNullOrWhiteSpace(request.Tool)) return Results.BadRequest(new { error = "goal and tool are required." });
+    var metadata = new Dictionary<string, System.Text.Json.JsonElement>
+    {
+        ["tool"] = System.Text.Json.JsonSerializer.SerializeToElement(request.Tool),
+        ["arguments"] = System.Text.Json.JsonSerializer.SerializeToElement(request.Arguments ?? new Dictionary<string, System.Text.Json.JsonElement>())
+    };
+    var result = await planner.PlanAsync(new Goal(Guid.NewGuid(), request.Goal, DateTimeOffset.UtcNow, 0, metadata), cancellationToken);
+    return result.Status switch
+    {
+        PlannerStatus.Completed => Results.Ok(result),
+        PlannerStatus.Cancelled => Results.Json(result, statusCode: 499),
+        _ => Results.BadRequest(result)
     };
 });
 

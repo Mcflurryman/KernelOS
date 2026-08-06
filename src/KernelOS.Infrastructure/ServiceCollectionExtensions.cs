@@ -1,4 +1,5 @@
 using KernelOS.Core;
+using KernelOS.Core.Planning;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -29,6 +30,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IChatModel, OllamaChatModel>();
         services.AddSingleton<IOllamaHealthCheck, OllamaHealthCheck>();
+        services.AddSingleton<IPlanner, KernelPlanner>();
 
         return services;
     }

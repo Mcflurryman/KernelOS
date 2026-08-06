@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\KernelOS.Core\KernelOS.Core.csproj" />
+    <ProjectReference Include="..\KernelOS.Tools\KernelOS.Tools.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,5 +1,7 @@
 # KernelOS
 
+> Estado actual: incluye el núcleo determinista del Planner mediante `POST /planner/execute`; solo ejecuta una herramienta indicada explícitamente a través de `IToolRouter`.
+
 KernelOS es una plataforma personal de IA local diseñada para reunir capacidades de asistencia, automatización y conocimiento bajo control del usuario.
 
 Kai es el asistente que opera sobre KernelOS. El proyecto está en una fase inicial y ofrece una API .NET 8 mínima con estado del sistema y conversación local mediante Ollama.

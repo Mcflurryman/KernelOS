@@ -1,5 +1,7 @@
 # Proyecto KernelOS
 
+El núcleo inicial del Planner es determinista y ejecuta una única Task explícita mediante `IToolRouter`; no usa IA, memoria ni planificación automática.
+
 ## Visión
 
 KernelOS será una plataforma personal de IA local: la base técnica que coordinará modelos, memoria, interfaces y herramientas. Kai será el asistente que interactúe con la persona usuaria y use las capacidades de KernelOS de forma segura. KernelOS es la plataforma; Kai es el asistente construido sobre ella.

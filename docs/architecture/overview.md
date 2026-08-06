@@ -1,19 +1,19 @@
 # Arquitectura de alto nivel
 
-KernelOS se mantiene como un monolito modular dentro de una única solución .NET 8. `KernelOS.Api` contiene los endpoints HTTP; `KernelOS.Core` declara contratos y modelos sin depender de ningún proveedor; `KernelOS.Infrastructure` implementa el acceso a Ollama y su configuración; `KernelOS.Tools` reserva las abstracciones para herramientas futuras. `KernelOS.Tests` valida los endpoints y los contratos con dobles locales.
+KernelOS se mantiene como un monolito modular dentro de una única solución .NET 8. `KernelOS.Api` contiene los endpoints HTTP; `KernelOS.Core` declara contratos y modelos independientes; `KernelOS.Infrastructure` implementa el acceso a Ollama y su configuración; `KernelOS.Tools` implementa el sistema de herramientas. `KernelOS.Tests` valida los límites públicos y los contratos con dobles locales.
 
-`IChatModel` desacopla KernelOS del proveedor de lenguaje. Kai es la identidad del asistente; Ollama es el proveedor local actual. En el futuro se podrán añadir otros proveedores de `IChatModel` sin cambiar Core ni el contrato público de conversación.
+`IChatModel` desacopla KernelOS del proveedor de lenguaje. Kai es la identidad del asistente; Ollama es el proveedor local actual. El Tool System es una frontera independiente: Kai solicita una herramienta por contrato y el router la ejecuta sin elegirla ni acceder a recursos externos por su cuenta.
 
 ```mermaid
 flowchart LR
   CLIENTE[Cliente HTTP] --> API[KernelOS.Api]
-  API --> CONTRACT[IChatModel en KernelOS.Core]
-  API --> HEALTH[IOllamaHealthCheck]
-  CONTRACT --> OLLAMA[OllamaChatModel en Infrastructure]
-  HEALTH --> OLLAMA
-  OLLAMA --> LOCAL[Ollama local]
+  API --> CHAT[IChatModel en KernelOS.Core]
+  CHAT --> OLLAMA[OllamaChatModel en Infrastructure]
+  API --> ROUTER[IToolRouter]
+  ROUTER --> REGISTRY[IToolRegistry]
+  REGISTRY --> TOOLS[IKernelTool]
+  TOOLS --> RESULT[ToolExecutionResult]
   TESTS[KernelOS.Tests] --> API
-  TESTS --> CONTRACT
 ```
 
-La implementación actual solo cubre conversación sin estado y una comprobación ligera de disponibilidad. Memoria, herramientas reales, canales externos y otras capacidades permanecen fuera de esta fase.
+La implementación actual ofrece conversación sin estado y un Tool System base con EchoTool y TimeTool demostrativas. Memoria, tool calling del LLM, herramientas reales, canales externos, voz y visión permanecen fuera de esta fase.

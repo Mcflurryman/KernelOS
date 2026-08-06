@@ -11,6 +11,7 @@ Este documento contiene las reglas obligatorias e invariables para KernelOS, Kai
 ## Seguridad y control
 
 - Un modelo nunca ejecuta acciones directamente: las solicita mediante contratos y herramientas controladas.
+- Los componentes de orquestación y los modelos no acceden directamente a recursos externos. Toda interacción de ese tipo pasa por una herramienta autorizada o por una abstracción de infraestructura expresamente documentada; `IChatModel` es una de esas fronteras de infraestructura.
 - Toda acción destructiva o sensible requiere autorización explícita de la persona usuaria.
 - Nunca se almacenarán en Git secretos, tokens, claves, contraseñas ni datos personales.
 - No se ejecutarán comandos destructivos sin confirmación previa.

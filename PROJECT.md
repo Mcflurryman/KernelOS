@@ -43,3 +43,7 @@ El proyecto se desarrollará principalmente con C# y .NET, priorizando el contro
 - Las acciones destructivas requieren confirmación.
 - No se almacenan secretos en Git.
 - Todo cambio de código debe poder revisarse con Git.
+
+## Estado actual
+
+La solución .NET 8 incluye una API mínima, endpoints de salud, conversación local mediante la abstracción `IChatModel` y Ollama como proveedor actual. También incluye una base de Tool System con registro, router y las herramientas demostrativas EchoTool y TimeTool. No existen todavía memoria, MCP, herramientas de negocio, voz, visión ni interfaz gráfica.

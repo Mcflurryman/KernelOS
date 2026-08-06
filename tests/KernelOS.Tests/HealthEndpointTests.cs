@@ -1,4 +1,5 @@
 using System.Net;
+using KernelOS.Core;
 using KernelOS.Tools;
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -39,7 +40,7 @@ public sealed class KernelToolContractTests
     {
         IKernelTool tool = new FakeKernelTool();
 
-        await tool.ExecuteAsync();
+        await tool.ExecuteAsync(new ToolExecutionRequest("fake", new Dictionary<string, System.Text.Json.JsonElement>()));
 
         Assert.Equal("fake", tool.Name);
         Assert.Equal("A fake tool used for testing.", tool.Description);
@@ -51,6 +52,15 @@ public sealed class KernelToolContractTests
 
         public string Description => "A fake tool used for testing.";
 
-        public Task ExecuteAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public string Category => "test";
+
+        public IReadOnlyCollection<ToolCapability> Capabilities => Array.Empty<ToolCapability>();
+
+        public IReadOnlyCollection<ToolParameter> Parameters => Array.Empty<ToolParameter>();
+
+        public Task<ToolExecutionResult> ExecuteAsync(
+            ToolExecutionRequest request,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(ToolExecutionResult.Success("The fake tool completed."));
     }
 }

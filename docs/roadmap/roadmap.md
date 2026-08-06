@@ -4,7 +4,7 @@
 2. ~~Solución .NET y endpoint de salud.~~ Completada.
 3. ~~Chat con Ollama.~~ Completada.
 4. Historial con SQLite.
-5. Sistema de herramientas.
+5. ~~Sistema de herramientas base.~~ Completada con EchoTool y TimeTool demostrativas.
 6. Agente programador controlado.
 7. Google Drive y Telegram.
 8. MCP.

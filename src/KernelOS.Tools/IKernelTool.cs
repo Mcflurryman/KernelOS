@@ -1,3 +1,5 @@
+using KernelOS.Core;
+
 namespace KernelOS.Tools;
 
 public interface IKernelTool
@@ -6,5 +8,13 @@ public interface IKernelTool
 
     string Description { get; }
 
-    Task ExecuteAsync(CancellationToken cancellationToken = default);
+    string Category { get; }
+
+    IReadOnlyCollection<ToolCapability> Capabilities { get; }
+
+    IReadOnlyCollection<ToolParameter> Parameters { get; }
+
+    Task<ToolExecutionResult> ExecuteAsync(
+        ToolExecutionRequest request,
+        CancellationToken cancellationToken = default);
 }

@@ -47,7 +47,11 @@ dotnet test
 dotnet run --project src/KernelOS.Api
 ```
 
-La API expone `GET /`, `GET /health`, `GET /health/ollama` y `POST /chat`.
+La API expone `GET /`, `GET /health`, `GET /health/ollama`, `POST /chat`, `GET /tools`, `GET /tools/{name}` y `POST /tools/{name}`.
+
+## Sistema de herramientas
+
+Kai solicita herramientas a través de contratos; no ejecuta acciones directamente. El sistema actual incluye únicamente `EchoTool` y `TimeTool` como demostraciones seguras de registro, consulta y ejecución. Consulta la [arquitectura del sistema de herramientas](docs/architecture/tool-system.md).
 
 ## Requisitos para chat local
 

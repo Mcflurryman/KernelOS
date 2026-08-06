@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddKernelTools();
@@ -18,6 +19,15 @@ app.UseExceptionHandler(errorApp =>
     errorApp.Run(async context =>
     {
         var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+        if (exception is BadHttpRequestException badRequestException)
+        {
+            KernelOSLog.InvalidRequest(app.Logger, badRequestException);
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new { error = "Invalid JSON request body." });
+            return;
+        }
+
         KernelOSLog.UnhandledException(app.Logger, exception);
 
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
@@ -138,4 +148,7 @@ internal static partial class KernelOSLog
 {
     [LoggerMessage(EventId = 1, Level = LogLevel.Error, Message = "Unhandled exception while processing a request.")]
     public static partial void UnhandledException(ILogger logger, Exception? exception);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "A request body could not be read as JSON.")]
+    public static partial void InvalidRequest(ILogger logger, BadHttpRequestException exception);
 }

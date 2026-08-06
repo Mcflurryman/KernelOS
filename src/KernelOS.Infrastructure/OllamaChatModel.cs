@@ -24,11 +24,14 @@ public sealed class OllamaChatModel(
 
         try
         {
+            OllamaChatLog.RequestStarted(logger, "api/chat", configuredOptions.Model);
             using var response = await httpClientFactory.CreateClient(ServiceCollectionExtensions.OllamaHttpClientName)
                 .PostAsJsonAsync(
                     "api/chat",
                     new OllamaApiRequest(configuredOptions.Model, messages),
                     cancellationToken);
+
+            OllamaChatLog.ResponseReceived(logger, "api/chat", (int)response.StatusCode);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -99,8 +102,14 @@ public sealed class OllamaChatModel(
 
 internal static partial class OllamaChatLog
 {
+    [LoggerMessage(EventId = 9, Level = LogLevel.Information, Message = "Sending a request to Ollama endpoint {Endpoint} with model {Model}.")]
+    public static partial void RequestStarted(ILogger logger, string endpoint, string model);
+
     [LoggerMessage(EventId = 10, Level = LogLevel.Warning, Message = "Ollama returned HTTP status {StatusCode}.")]
     public static partial void HttpError(ILogger logger, int statusCode);
+
+    [LoggerMessage(EventId = 15, Level = LogLevel.Information, Message = "Ollama endpoint {Endpoint} returned HTTP status {StatusCode}.")]
+    public static partial void ResponseReceived(ILogger logger, string endpoint, int statusCode);
 
     [LoggerMessage(EventId = 11, Level = LogLevel.Warning, Message = "Ollama returned an invalid response.")]
     public static partial void InvalidResponse(ILogger logger);

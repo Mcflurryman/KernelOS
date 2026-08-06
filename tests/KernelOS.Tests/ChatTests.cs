@@ -32,6 +32,17 @@ public sealed class ChatEndpointTests : IClassFixture<TestApplicationFactory>
     }
 
     [Fact]
+    public async Task PostChatReturnsBadRequestWhenJsonIsNotUtf8()
+    {
+        using var content = new ByteArrayContent([0x7B, 0x22, 0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x3A, 0x22, 0xF3, 0x22, 0x7D]);
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+
+        using var response = await client.PostAsync("/chat", content);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task PostChatReturnsSimulatedResponseWithModel()
     {
         using var response = await client.PostAsync("/chat", JsonContent.Create(new { message = "Hola Kai" }));

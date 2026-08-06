@@ -4,24 +4,33 @@ title: "[Error]: "
 labels: ["error"]
 body:
   - type: textarea
-    id: descripcion
+    id: comportamiento
     attributes:
-      label: Descripción del problema
-      description: Explica qué ocurrió y qué esperabas que ocurriera.
+      label: Comportamiento actual y esperado
+      description: Explica qué ocurre y qué debería ocurrir.
     validations:
       required: true
   - type: textarea
     id: pasos
     attributes:
-      label: Pasos para reproducirlo
-      placeholder: |
-        1. ...
-        2. ...
-        3. ...
+      label: Pasos de reproducción y entorno
+      description: Pasos mínimos, versión, sistema operativo y configuración no sensible.
     validations:
       required: true
   - type: textarea
-    id: entorno
+    id: evidencia
     attributes:
-      label: Entorno y notas
-      description: Incluye versión, sistema operativo, registros no sensibles u otro contexto.
+      label: Logs seguros e impacto
+      description: Incluye logs sin secretos ni datos personales e indica el impacto.
+  - type: textarea
+    id: analisis
+    attributes:
+      label: Causa raíz y criterio de resolución
+      description: Si se conoce, indica causa raíz; define cómo se comprobará la corrección.
+  - type: checkboxes
+    id: seguridad
+    attributes:
+      label: Seguridad
+      options:
+        - label: Confirmo que no he incluido secretos, tokens ni datos personales.
+          required: true

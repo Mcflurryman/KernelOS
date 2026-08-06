@@ -27,6 +27,7 @@ $RECYCLE.BIN/
 !.env.example
 secrets.json
 appsettings.Local.json
+appsettings.*.Local.json
 
 # Local databases
 *.db
@@ -41,6 +42,11 @@ recordings/
 screenshots/
 videos/
 audio/
+workspace/
+Workspace/
+logs/
+TestResults/
+publish/
 
 # Large artifacts
 *.onnx

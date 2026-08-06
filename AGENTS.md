@@ -60,3 +60,11 @@ Una tarea solo está terminada cuando:
 - se ha mostrado un resumen de cambios;
 - se han declarado limitaciones reales;
 - no se ha hecho commit ni push sin permiso.
+
+## Desarrollo mediante ramas
+
+- Comprueba la rama antes de modificar archivos; nunca trabajes directamente sobre `main`.
+- Usa una rama `feature/`, `fix/`, `chore/` o `docs/` según el alcance.
+- Ejecuta `./scripts/validate.ps1` antes de proponer un Pull Request. La CI no sustituye la validación local.
+- No crees Pull Requests, merges, tags ni releases salvo solicitud expresa.
+- No declares una tarea terminada si build, tests o CI aplicable fallan.

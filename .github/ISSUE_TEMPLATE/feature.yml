@@ -6,19 +6,31 @@ body:
   - type: textarea
     id: problema
     attributes:
-      label: Necesidad
-      description: ¿Qué necesidad resolvería esta funcionalidad?
+      label: Problema y objetivo
+      description: Qué necesidad resuelve y qué resultado se espera.
+    validations:
+      required: true
+  - type: textarea
+    id: alcance
+    attributes:
+      label: Alcance y fuera de alcance
+      description: Indica explícitamente qué incluye y qué no incluye.
     validations:
       required: true
   - type: textarea
     id: propuesta
     attributes:
-      label: Propuesta
-      description: Describe la solución esperada.
+      label: Propuesta e impacto arquitectónico
+      description: Describe el enfoque, módulos afectados, ADR necesaria y alternativas relevantes.
+  - type: textarea
+    id: riesgos
+    attributes:
+      label: Riesgos y criterios de aceptación
+      description: Incluye riesgos, verificaciones y condiciones de aceptación.
     validations:
       required: true
   - type: textarea
-    id: notas
+    id: documentacion
     attributes:
-      label: Notas adicionales
-      description: Incluye riesgos, alternativas o contexto relevante.
+      label: Documentación afectada
+      description: README, arquitectura, roadmap, ADR u otros documentos a revisar.

@@ -17,4 +17,13 @@
 15. Voz.
 16. Screenpipe y visión.
 17. Control de Windows.
-18. Interfaz futurista.
+10. ~~Engineering Infrastructure: CI, validación local, workflow Git y versionado.~~ Completada.
+11. Escritura, copia, movimiento, borrado, renombrado y Watch de filesystem.
+12. Agente programador controlado.
+13. Google Drive y Telegram.
+14. MCP.
+15. Knowledge, RAG y memoria.
+16. Voz.
+17. Screenpipe y visión.
+18. Control de Windows.
+19. Interfaz futurista.

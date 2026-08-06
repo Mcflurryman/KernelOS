@@ -4,13 +4,16 @@
 2. ~~Solución .NET y endpoint de salud.~~ Completada.
 3. ~~Chat con Ollama.~~ Completada.
 4. Historial con SQLite.
-5. ~~Sistema de herramientas base.~~ Completada con EchoTool y TimeTool demostrativas.
-6. ~~Diseño de arquitectura del Planner.~~ Completado; núcleo determinista inicial implementado.
-7. Agente programador controlado.
-8. Google Drive y Telegram.
-9. MCP.
-10. RAG y memoria.
-11. Voz.
-12. Screenpipe y visión.
-13. Control de Windows.
-14. Interfaz futurista.
+5. ~~Sistema de herramientas base.~~ Completada.
+6. ~~Diseño de arquitectura del Planner y núcleo determinista inicial.~~ Completado.
+7. ~~Diseño de Filesystem Capability.~~ Completado.
+8. ~~Filesystem Read Only: `search`, `exists`, `metadata`, `resolve`, `list`.~~ Completado y validado manualmente.
+9. Escritura, copia, movimiento, borrado, renombrado y Watch de filesystem.
+10. Agente programador controlado.
+11. Google Drive y Telegram.
+12. MCP.
+13. RAG y memoria.
+14. Voz.
+15. Screenpipe y visión.
+16. Control de Windows.
+17. Interfaz futurista.

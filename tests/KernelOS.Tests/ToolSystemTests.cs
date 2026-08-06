@@ -50,7 +50,7 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<KernelToolRegistry>(provider.GetRequiredService<IToolRegistry>());
         Assert.IsType<KernelToolRouter>(provider.GetRequiredService<IToolRouter>());
-        Assert.Equal(2, provider.GetServices<IKernelTool>().Count());
+        Assert.Equal(3, provider.GetServices<IKernelTool>().Count());
     }
 
     private static KernelToolRegistry CreateRegistry() => new([new EchoTool(), new TimeTool()]);

@@ -149,6 +149,15 @@ app.MapPost("/planner/execute", async (PlannerExecuteApiRequest? request, IPlann
     };
 });
 
+var filesystemOperations = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "search", "exists", "metadata", "resolve", "list" };
+app.MapPost("/filesystem/{operation}", async (string operation, ToolExecutionApiRequest? request, IToolRouter router, CancellationToken cancellationToken) =>
+{
+    if (!filesystemOperations.Contains(operation)) return Results.BadRequest(new { error = "Invalid filesystem operation." });
+    var args = new Dictionary<string,System.Text.Json.JsonElement>(request?.Arguments ?? new Dictionary<string,System.Text.Json.JsonElement>()) { ["operation"] = System.Text.Json.JsonSerializer.SerializeToElement(operation) };
+    var result = await router.ExecuteAsync(new ToolExecutionRequest("filesystem",args),cancellationToken);
+    return result.Status==ToolExecutionStatus.Success?Results.Ok(result):result.Status==ToolExecutionStatus.Unauthorized?Results.Json(result,statusCode:403):result.Status==ToolExecutionStatus.NotFound?Results.NotFound(result):Results.BadRequest(result);
+});
+
 app.Run();
 
 static object CreateToolDescription(IKernelTool tool) => new

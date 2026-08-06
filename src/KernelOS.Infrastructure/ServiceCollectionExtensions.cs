@@ -31,6 +31,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IChatModel, OllamaChatModel>();
         services.AddSingleton<IOllamaHealthCheck, OllamaHealthCheck>();
         services.AddSingleton<IPlanner, KernelPlanner>();
+        services.AddOptions<FilesystemOptions>().Bind(configuration.GetSection(FilesystemOptions.SectionName));
+        services.AddSingleton<KernelOS.Core.Filesystem.IFilesystemCapability, LocalFilesystemCapability>();
+        services.AddSingleton<IFilesystemRootResolver, FilesystemRootResolver>();
 
         return services;
     }

@@ -8,6 +8,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<IKernelTool, EchoTool>();
         services.AddSingleton<IKernelTool, TimeTool>();
+        services.AddSingleton<IKernelTool, FilesystemTool>();
         services.AddSingleton<IToolRegistry, KernelToolRegistry>();
         services.AddSingleton<IToolRouter, KernelToolRouter>();
 

@@ -37,3 +37,11 @@ La capacidad no lee contenido de documentos ni implementa escritura, copia, movi
 - [Arquitectura](docs/architecture/overview.md)
 - [Filesystem Capability](docs/architecture/filesystem-capability.md)
 - [Roadmap](docs/roadmap/roadmap.md)
+
+## Desarrollo
+
+El desarrollo se realiza mediante ramas y Pull Requests; `main` representa código estable. Ejecuta la validación local reproducible con `powershell -ExecutionPolicy Bypass -File .\scripts\validate.ps1` antes de abrir un PR. El bypass solo se aplica a ese proceso; cuando esté disponible, también puede usarse `pwsh -File .\scripts\validate.ps1`. KernelOS CI valida restore, build y tests en cada Pull Request hacia `main` y en las ramas permitidas. La versión actual es `0.4.0`.
+
+- [Flujo Git](docs/guides/git-workflow.md)
+- [Versionado](docs/guides/versioning.md)
+- [Changelog](CHANGELOG.md)

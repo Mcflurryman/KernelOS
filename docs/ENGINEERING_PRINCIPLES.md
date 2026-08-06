@@ -2,28 +2,26 @@
 
 ## Arquitectura inicial
 
-KernelOS comienza como un monolito modular en una única solución y repositorio. Cada módulo tiene responsabilidades delimitadas: Core contiene contratos y modelos independientes; Infrastructure implementa proveedores e integraciones; Api presenta los endpoints; Tools aloja contratos de herramientas. No se crearán proyectos nuevos sin una justificación demostrable.
+KernelOS comienza como un monolito modular en una única solución y repositorio. Core contiene contratos y modelos independientes; Infrastructure implementa proveedores e integraciones; Api presenta endpoints; Tools aloja herramientas. No se crean proyectos nuevos sin una justificación demostrable.
 
 ## Diseño y dependencias
 
-- Se aplicará separación de responsabilidades e inversión de dependencias en los límites reales del sistema.
-- Se preferirá composición antes que herencia.
-- Las interfaces se crearán solo cuando exista una frontera o una posibilidad real de sustitución, como `IChatModel`.
-- Se elegirá la solución más simple antes que abstracciones prematuras.
-- La inyección de dependencias compondrá las implementaciones en los bordes de la aplicación.
-- No se adoptarán CQRS, MediatR, microservicios u otros patrones por moda; requerirán una necesidad demostrada.
+- Se aplican separación de responsabilidades e inversión de dependencias en fronteras reales.
+- Se prefiere composición a herencia y la solución más simple a abstracciones prematuras.
+- La inyección de dependencias compone implementaciones en los bordes.
+- No se adoptan patrones por moda sin necesidad demostrada.
 
 ## Ejecución y configuración
 
-- Las operaciones de entrada y salida usarán `async`/`await` y aceptarán `CancellationToken` cuando sea aplicable.
-- La configuración será externa al código y se accederá mediante Options en los componentes que la consuman.
-- El logging será útil para operar el sistema, pero nunca incluirá secretos ni el contenido completo de conversaciones.
-- Los errores se traducirán a resultados controlados en los límites públicos, sin exponer detalles internos.
-- El código debe ser observable y comprobable mediante límites claros y dobles de prueba sencillos.
+- Las operaciones de entrada y salida usan `async`/`await` y `CancellationToken` cuando aplica.
+- La configuración es externa y se consume mediante Options.
+- Los logs no incluyen secretos ni conversaciones completas.
+- Los errores se traducen a resultados controlados sin detalles internos.
 
 ## Calidad y evolución
 
-- Se mantendrán pruebas unitarias e integración proporcionales al cambio.
-- Se evitará deuda técnica innecesaria.
-- Se conservará la compatibilidad o se documentará explícitamente cualquier ruptura.
-- El rendimiento se medirá antes de optimizar.
+- Se mantienen pruebas proporcionales al cambio y se documentan rupturas de compatibilidad.
+- La validación local y CI ejecutan los mismos restore, build y tests de forma reproducible.
+- Los cambios se desarrollan en ramas cortas, de alcance coherente y revisables mediante Pull Request.
+- Se prefieren cambios pequeños y diffs fáciles de revisar antes que acumulaciones no relacionadas.
+- El rendimiento se mide antes de optimizar.

@@ -1,0 +1,27 @@
+name: Informe de error
+description: Informa de un problema encontrado en KernelOS.
+title: "[Error]: "
+labels: ["error"]
+body:
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción del problema
+      description: Explica qué ocurrió y qué esperabas que ocurriera.
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducirlo
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: entorno
+    attributes:
+      label: Entorno y notas
+      description: Incluye versión, sistema operativo, registros no sensibles u otro contexto.

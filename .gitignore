@@ -1,0 +1,48 @@
+# .NET
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+
+# Visual Studio Code
+.vscode/settings.json
+
+# JetBrains
+.idea/
+*.sln.iml
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+secrets.json
+appsettings.Local.json
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+
+# Local data and generated media
+data/
+models/
+storage/
+recordings/
+screenshots/
+videos/
+audio/
+
+# Large artifacts
+*.onnx
+*.gguf
+*.safetensors

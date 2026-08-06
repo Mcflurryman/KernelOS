@@ -1,0 +1,24 @@
+name: Propuesta de funcionalidad
+description: Propón una mejora para KernelOS.
+title: "[Funcionalidad]: "
+labels: ["mejora"]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Necesidad
+      description: ¿Qué necesidad resolvería esta funcionalidad?
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Propuesta
+      description: Describe la solución esperada.
+    validations:
+      required: true
+  - type: textarea
+    id: notas
+    attributes:
+      label: Notas adicionales
+      description: Incluye riesgos, alternativas o contexto relevante.

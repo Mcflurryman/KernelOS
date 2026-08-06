@@ -1,6 +1,10 @@
 # Document Readers
 
-> Estado: diseño arquitectónico completado. No existen lectores, contratos ni endpoints implementados todavía.
+> Estado: Document Readers Core implementado para TXT, Markdown, JSON y CSV. PDF, DOCX, XLSX, OCR, Knowledge y Memory permanecen pendientes.
+
+La implementación usa contratos en Core, Readers registrados explícitamente, Registry para localización, Router para selección segura, ReadService para delegar autorización al filesystem, `DocumentTool` y `POST /documents/read`. Los límites configurables cubren tamaño, caracteres, filas y columnas; `DOCUMENT_TRUNCATED` e `IRREGULAR_TABLE` son warnings estables. Las respuestas públicas omiten referencias internas.
+
+`TooLarge` se traduce mediante `ToolExecutionStatus.TooLarge`, no mediante texto de mensajes, y la API devuelve HTTP 413. Un fallo interno conserva `Failed` y devuelve HTTP 500. CSV con un campo entre comillas sin cerrar devuelve `InvalidDocument` si no se permiten parciales; si se permiten, devuelve `PartialSuccess` con `CSV_UNCLOSED_QUOTED_FIELD` y solo conserva registros verificables.
 
 ## Propósito y frontera
 

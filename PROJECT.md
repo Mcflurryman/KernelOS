@@ -14,3 +14,5 @@ No están implementados memoria, MCP, herramientas de negocio, escritura de file
 - Las acciones sensibles o destructivas requieren autorización explícita.
 - No se almacenan secretos en Git.
 - Core no depende de Infrastructure, API ni Tools.
+
+Document Readers Core está disponible para TXT, Markdown, JSON y CSV; entrega contenido estructurado a futuro Knowledge, sin lectura de formatos Office/PDF ni almacenamiento de memoria.

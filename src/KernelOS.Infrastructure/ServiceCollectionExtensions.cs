@@ -1,5 +1,8 @@
 using KernelOS.Core;
 using KernelOS.Core.Planning;
+using KernelOS.Core.Documents;
+using KernelOS.Infrastructure.Documents;
+using KernelOS.Infrastructure.Documents.Readers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -34,6 +37,14 @@ public static class ServiceCollectionExtensions
         services.AddOptions<FilesystemOptions>().Bind(configuration.GetSection(FilesystemOptions.SectionName));
         services.AddSingleton<KernelOS.Core.Filesystem.IFilesystemCapability, LocalFilesystemCapability>();
         services.AddSingleton<IFilesystemRootResolver, FilesystemRootResolver>();
+        services.AddOptions<DocumentReaderOptions>().Bind(configuration.GetSection(DocumentReaderOptions.SectionName)).Validate(o => o.MaxFileSizeBytes > 0 && o.MaxExtractedCharacters > 0 && o.MaxRows > 0 && o.MaxColumns > 0 && o.TimeoutSeconds > 0, "DocumentReaders limits must be greater than zero.").ValidateOnStart();
+        services.AddSingleton<IDocumentReader, TxtDocumentReader>();
+        services.AddSingleton<IDocumentReader, MarkdownDocumentReader>();
+        services.AddSingleton<IDocumentReader, JsonDocumentReader>();
+        services.AddSingleton<IDocumentReader, CsvDocumentReader>();
+        services.AddSingleton<IDocumentReaderRegistry, DocumentReaderRegistry>();
+        services.AddSingleton<IDocumentReaderRouter, DocumentReaderRouter>();
+        services.AddSingleton<IDocumentReadService, DocumentReadService>();
 
         return services;
     }

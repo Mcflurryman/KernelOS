@@ -8,7 +8,7 @@
 6. ~~Diseño de arquitectura del Planner y núcleo determinista inicial.~~ Completado.
 7. ~~Diseño de Filesystem Capability.~~ Completado.
 8. ~~Filesystem Read Only: `search`, `exists`, `metadata`, `resolve`, `list`.~~ Completado y validado manualmente.
-9. ~~Diseño de Document Readers.~~ Completado; implementación pendiente.
+9. ~~Diseño de Document Readers.~~ Completado. ~~Document Readers Core (TXT, Markdown, JSON y CSV).~~ Completado.
 10. Escritura, copia, movimiento, borrado, renombrado y Watch de filesystem.
 11. Agente programador controlado.
 12. Google Drive y Telegram.

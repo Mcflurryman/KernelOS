@@ -8,12 +8,13 @@
 6. ~~Diseño de arquitectura del Planner y núcleo determinista inicial.~~ Completado.
 7. ~~Diseño de Filesystem Capability.~~ Completado.
 8. ~~Filesystem Read Only: `search`, `exists`, `metadata`, `resolve`, `list`.~~ Completado y validado manualmente.
-9. Escritura, copia, movimiento, borrado, renombrado y Watch de filesystem.
-10. Agente programador controlado.
-11. Google Drive y Telegram.
-12. MCP.
-13. RAG y memoria.
-14. Voz.
-15. Screenpipe y visión.
-16. Control de Windows.
-17. Interfaz futurista.
+9. ~~Diseño de Document Readers.~~ Completado; implementación pendiente.
+10. Escritura, copia, movimiento, borrado, renombrado y Watch de filesystem.
+11. Agente programador controlado.
+12. Google Drive y Telegram.
+13. MCP.
+14. Knowledge, RAG y memoria.
+15. Voz.
+16. Screenpipe y visión.
+17. Control de Windows.
+18. Interfaz futurista.

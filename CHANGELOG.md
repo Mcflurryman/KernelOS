@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Document Readers Core para TXT, Markdown, JSON y CSV.
+- DocumentTool, endpoint `POST /documents/read`, límites configurables y hashes SHA-256.
+
 ## [0.4.0] - 2026-08-07
 
 ### Added

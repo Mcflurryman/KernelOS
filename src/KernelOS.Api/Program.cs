@@ -149,6 +149,28 @@ app.MapPost("/planner/execute", async (PlannerExecuteApiRequest? request, IPlann
     };
 });
 
+app.MapPost("/documents/read", async (DocumentReadApiRequest? request, IToolRouter router, CancellationToken cancellationToken) =>
+{
+    if (string.IsNullOrWhiteSpace(request?.Path)) return Results.BadRequest(new { error = "path is required." });
+    var arguments = new Dictionary<string, System.Text.Json.JsonElement>
+    {
+        ["operation"] = System.Text.Json.JsonSerializer.SerializeToElement("read"),
+        ["path"] = System.Text.Json.JsonSerializer.SerializeToElement(request.Path)
+    };
+    if (!string.IsNullOrWhiteSpace(request.Format)) arguments["format"] = System.Text.Json.JsonSerializer.SerializeToElement(request.Format);
+    var result = await router.ExecuteAsync(new ToolExecutionRequest("document", arguments), cancellationToken);
+    return result.Status switch
+    {
+        ToolExecutionStatus.Success => Results.Ok(result),
+        ToolExecutionStatus.Unauthorized => Results.Json(result, statusCode: StatusCodes.Status403Forbidden),
+        ToolExecutionStatus.NotFound => Results.NotFound(result),
+        ToolExecutionStatus.Cancelled => Results.Json(result, statusCode: 499),
+        ToolExecutionStatus.TooLarge => Results.Json(result, statusCode: StatusCodes.Status413PayloadTooLarge),
+        ToolExecutionStatus.Failure => Results.Json(result, statusCode: StatusCodes.Status500InternalServerError),
+        _ => Results.BadRequest(result)
+    };
+});
+
 var filesystemOperations = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "search", "exists", "metadata", "resolve", "list" };
 app.MapPost("/filesystem/{operation}", async (string operation, ToolExecutionApiRequest? request, IToolRouter router, CancellationToken cancellationToken) =>
 {

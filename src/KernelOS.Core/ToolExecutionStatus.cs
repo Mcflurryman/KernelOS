@@ -7,5 +7,6 @@ public enum ToolExecutionStatus
     Cancelled,
     Unauthorized,
     NotFound,
-    InvalidArguments
+    InvalidArguments,
+    TooLarge
 }

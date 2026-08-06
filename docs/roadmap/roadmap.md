@@ -2,7 +2,7 @@
 
 1. Base documental y repositorio.
 2. ~~Solución .NET y endpoint de salud.~~ Completada.
-3. Chat con Ollama.
+3. ~~Chat con Ollama.~~ Completada.
 4. Historial con SQLite.
 5. Sistema de herramientas.
 6. Agente programador controlado.

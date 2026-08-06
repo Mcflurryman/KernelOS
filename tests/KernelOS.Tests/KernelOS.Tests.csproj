@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\KernelOS.Api\KernelOS.Api.csproj" />
     <ProjectReference Include="..\..\src\KernelOS.Core\KernelOS.Core.csproj" />
+    <ProjectReference Include="..\..\src\KernelOS.Infrastructure\KernelOS.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\KernelOS.Tools\KernelOS.Tools.csproj" />
   </ItemGroup>
 </Project>

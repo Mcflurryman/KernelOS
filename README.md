@@ -2,7 +2,7 @@
 
 KernelOS es una plataforma personal de IA local diseñada para reunir capacidades de asistencia, automatización y conocimiento bajo control del usuario.
 
-Kai es el asistente que operará sobre la plataforma KernelOS. El proyecto se encuentra en una fase inicial: incluye una solución .NET 8 con una API mínima y un endpoint de estado.
+Kai es el asistente que opera sobre KernelOS. El proyecto está en una fase inicial y ofrece una API .NET 8 mínima con estado del sistema y conversación local mediante Ollama.
 
 ## Objetivos principales
 
@@ -27,6 +27,15 @@ assets/    Recursos de marca e interfaz
 
 Consulta [PROJECT.md](PROJECT.md) para la visión del proyecto y [docs/roadmap/roadmap.md](docs/roadmap/roadmap.md) para sus fases previstas.
 
+## Gobernanza de ingeniería
+
+- [Constitución](CONSTITUTION.md)
+- [Instrucciones para agentes](AGENTS.md)
+- [Guía de Kai](KAI.md)
+- [Principios de ingeniería](docs/ENGINEERING_PRINCIPLES.md)
+- [Estándares de código](docs/CODING_STANDARDS.md)
+- [Decisiones arquitectónicas](docs/decisions/)
+
 ## Ejecutar localmente
 
 Desde la raíz del repositorio:
@@ -38,4 +47,37 @@ dotnet test
 dotnet run --project src/KernelOS.Api
 ```
 
-La API expone `GET /` y `GET /health`.
+La API expone `GET /`, `GET /health`, `GET /health/ollama` y `POST /chat`.
+
+## Requisitos para chat local
+
+1. Instala Ollama.
+2. Descarga un modelo:
+
+   ```powershell
+   ollama pull qwen3:8b
+   ```
+
+3. Comprueba que Ollama reconoce el modelo:
+
+   ```powershell
+   ollama list
+   ```
+
+4. Ejecuta KernelOS:
+
+   ```powershell
+   dotnet run --project src/KernelOS.Api
+   ```
+
+5. Usa la URL que muestre `dotnet run`, ya que el puerto puede variar, para enviar una petición `POST /chat`:
+
+   ```powershell
+   Invoke-RestMethod `
+     -Uri "http://localhost:PUERTO/chat" `
+     -Method Post `
+     -ContentType "application/json" `
+     -Body '{"message":"Hola Kai"}'
+   ```
+
+La configuración de Ollama se encuentra en `appsettings.json` y también admite las variables de entorno `Ollama__BaseUrl`, `Ollama__Model`, `Ollama__TimeoutSeconds` y `Ollama__SystemPrompt`.

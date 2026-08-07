@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- `GET /health` obtiene la versión de producto desde los metadatos del ensamblado.
 - Resolución portable y segura de aliases especiales de filesystem cuando Desktop o Documents no están disponibles.
 - Document Readers Core para TXT, Markdown, JSON y CSV.
 - DocumentTool, endpoint `POST /documents/read`, límites configurables y hashes SHA-256.

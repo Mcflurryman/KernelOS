@@ -48,7 +48,7 @@ El desarrollo se realiza mediante ramas y Pull Requests; `main` representa códi
 
 ## Document Readers Core
 
-`POST /documents/read` implementa lectura de TXT, Markdown, JSON y CSV mediante rutas autorizadas. El body es `{"path":"Workspace/testdata/documents/text/sample.txt","format":null}`. Devuelve 200 para éxito o resultado parcial, 400 para formato o documento inválido, 403 para rutas no autorizadas, 404 para inexistentes y 413 para límites de archivo. Los límites de `DocumentReaders` son configurables; el contenido se trata como dato no confiable. PDF, DOCX, XLSX, OCR, Knowledge y Memory no están implementados.
+`POST /documents/read` implementa lectura de TXT, Markdown, JSON y CSV mediante rutas autorizadas. El body es `{"path":"Workspace/testdata/documents/text/sample.txt","format":null}`. Devuelve 200 para éxito o resultado parcial, 400 para formato o documento inválido, 403 para rutas no autorizadas, 404 para inexistentes y 413 para límites de archivo. Los límites de `DocumentReaders` son configurables; el contenido se trata como dato no confiable. PDF, DOCX, XLSX y OCR no están implementados.
 
 Los límites se identifican estructuralmente, no por el texto de mensajes; los fallos internos devuelven 500 seguro. CSV con comillas sin cerrar devuelve 400 en modo estricto o 200 parcial con un warning si están permitidos resultados parciales.
 
@@ -58,4 +58,8 @@ Invoke-RestMethod -Uri "http://localhost:PUERTO/documents/read" -Method POST -Co
 
 ## Knowledge Core
 
-Knowledge Core transforma internamente `RawDocument` en items estructurados de texto, títulos, listas, código, JSON, tablas y metadatos seguros. No expone endpoint ni herramienta todavía. Memory, embeddings, RAG y búsqueda semántica no están implementados.
+Knowledge Core transforma internamente `RawDocument` en items estructurados de texto, títulos, listas, código, JSON, tablas y metadatos seguros. No expone endpoint ni herramienta todavía.
+
+## Memory Core
+
+Memory Core In-Memory almacena snapshots versionados de Knowledge internamente y ofrece consultas exactas deterministas. No expone endpoint ni herramienta. Persistencia, SQLite, embeddings, búsqueda semántica y RAG no están implementados.

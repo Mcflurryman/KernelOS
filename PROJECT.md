@@ -6,7 +6,7 @@ KernelOS es una plataforma personal de IA local; Kai es el asistente que opera s
 
 La solución .NET 8 incluye API mínima, salud, chat mediante `IChatModel` con Ollama como proveedor actual, Tool System, Planner determinista inicial y Filesystem Capability Read Only. Filesystem usa `FilesystemTool` e `IToolRouter` para `search`, `exists`, `metadata`, `resolve` y `list`, con raices configuradas y sin operaciones de escritura.
 
-No están implementados memoria, MCP, herramientas de negocio, escritura de filesystem, proveedores remotos, voz, visión ni interfaz gráfica.
+No están implementados persistencia de memoria, MCP, herramientas de negocio, escritura de filesystem, proveedores remotos, voz, visión ni interfaz gráfica.
 
 ## Principios
 
@@ -15,4 +15,4 @@ No están implementados memoria, MCP, herramientas de negocio, escritura de file
 - No se almacenan secretos en Git.
 - Core no depende de Infrastructure, API ni Tools.
 
-Document Readers Core está disponible para TXT, Markdown, JSON y CSV. Knowledge Core transforma `RawDocument` en unidades estructuradas y trazables sin leer archivos ni persistirlas. No hay Memory, embeddings, RAG ni búsqueda semántica; tampoco formatos Office/PDF.
+Document Readers Core está disponible para TXT, Markdown, JSON y CSV. Knowledge Core transforma `RawDocument` en unidades estructuradas y trazables. Memory Core In-Memory almacena Knowledge de forma determinista y efímera; no hay persistencia, embeddings, RAG ni búsqueda semántica, ni formatos Office/PDF.

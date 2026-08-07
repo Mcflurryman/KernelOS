@@ -18,6 +18,6 @@ El chunking solo se aplica a contenido largo, usa caracteres, prefiere saltos de
 
 ## Evolución
 
-Memory podrá persistir e indexar `KnowledgeDocument`; RAG podrá crear embeddings y búsqueda semántica sobre items sin modificar el Builder. Planner solicitará datos mediante contratos y herramientas autorizadas; Kai recibirá contexto mínimo. Versionado, persistencia, SQLite, embeddings, vector database, RAG y búsqueda semántica siguen fuera de alcance.
+Memory Core In-Memory almacena snapshots de `KnowledgeDocument` mediante `IMemoryStore`; una persistencia futura podrá sustituir su implementación sin modificar el Builder. RAG podrá crear embeddings y búsqueda semántica sobre items sin modificar el Builder. Planner solicitará datos mediante contratos y herramientas autorizadas; Kai recibirá contexto mínimo. Persistencia, SQLite, embeddings, vector database, RAG y búsqueda semántica siguen fuera de alcance.
 
 No se crea `KnowledgeTool`: pasar un RawDocument completo mediante el Tool System introduce serialización y acoplamiento sin una referencia segura persistente. Tampoco se crea `POST /knowledge/build`; las pruebas e integraciones futuras usan `IKnowledgeBuilder` directamente.

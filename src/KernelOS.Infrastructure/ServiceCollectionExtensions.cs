@@ -19,6 +19,8 @@ using KernelOS.Core.HybridSearch;
 using KernelOS.Infrastructure.HybridSearch;
 using KernelOS.Core.Context;
 using KernelOS.Infrastructure.Context;
+using KernelOS.Core.Rag;
+using KernelOS.Infrastructure.Rag;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -77,6 +79,9 @@ public static class ServiceCollectionExtensions
         services.AddOptions<ContextOptions>().Bind(configuration.GetSection(ContextOptions.SectionName)).Validate(o => o.DefaultMaxTokens > 0 && o.MaxAllowedTokens >= o.DefaultMaxTokens && o.DefaultMaxItems > 0 && o.MaxAllowedItems >= o.DefaultMaxItems && float.IsFinite(o.CharactersPerTokenEstimate) && o.CharactersPerTokenEstimate > 0, "Context options are invalid.").ValidateOnStart();
         services.AddSingleton<IContextTokenEstimator, CharacterRatioTokenEstimator>();
         services.AddSingleton<IContextBuilder, ContextBuilder>();
+        services.AddOptions<RagOptions>().Bind(configuration.GetSection(RagOptions.SectionName)).Validate(o => o.MaxQueryCharacters > 0 && o.DefaultTopK > 0 && o.MaxTopK >= o.DefaultTopK && o.DefaultContextTokens > 0 && o.MaxContextTokens >= o.DefaultContextTokens && !string.IsNullOrWhiteSpace(o.SystemInstruction), "Rag options are invalid.").ValidateOnStart();
+        services.AddSingleton<IRagPromptBuilder, RagPromptBuilder>();
+        services.AddSingleton<IRagPipeline, RagPipeline>();
         services.AddOptions<EmbeddingOptions>().Bind(configuration.GetSection(EmbeddingOptions.SectionName)).Validate(o => o.MaxInputCharacters > 0 && o.MaxBatchSize > 0 && o.ExpectedDimensions > 0 && o.TimeoutSeconds > 0 && (!string.Equals(o.Provider, "ollama", StringComparison.OrdinalIgnoreCase) || (Uri.TryCreate(o.BaseUrl, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) && !string.IsNullOrWhiteSpace(o.Model))) && (string.IsNullOrWhiteSpace(o.Provider) || string.Equals(o.Provider, "none", StringComparison.OrdinalIgnoreCase) || string.Equals(o.Provider, "ollama", StringComparison.OrdinalIgnoreCase)), "Embeddings options are invalid.").ValidateOnStart();
         var embeddingProvider = configuration.GetSection(EmbeddingOptions.SectionName).GetValue<string>(nameof(EmbeddingOptions.Provider));
         if (string.Equals(embeddingProvider, "ollama", StringComparison.OrdinalIgnoreCase))

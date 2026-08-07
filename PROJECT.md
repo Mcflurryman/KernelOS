@@ -21,6 +21,6 @@ La plataforma separa contratos independientes en Core, implementaciones y provee
 
 ## Objetivos y no objetivos actuales
 
-El objetivo presente es consolidar los componentes locales ya entregados: chat, acciones controladas, ingestión documental, memoria efímera, búsqueda léxica, generación de embeddings, Vector Index In-Memory, Semantic Search, Hybrid Search y Context Builder internos. RAG, automatización general, proveedores cloud, UI, voz, visión y persistencia de memoria siguen fuera del alcance actual.
+El objetivo presente incluye RAG Pipeline interno sobre retrieval y Context Builder. Kai Agent, conversación persistente, automatización general, proveedores cloud, UI, voz, visión y persistencia de memoria siguen fuera del alcance actual.
 
 La evolución futura y sus dependencias se mantienen en el [Roadmap](docs/roadmap/roadmap.md), no en este documento.

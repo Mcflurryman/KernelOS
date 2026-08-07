@@ -4,6 +4,7 @@
 
 ### Added
 
+- RAG Pipeline Core interno: orquesta Hybrid Search, Context Builder, prompt determinista y `IChatModel` sin Tools, Planner ni fallback cuando no hay contexto.
 - Context Builder Core interno: resuelve referencias de retrieval exclusivamente mediante Memory, prepara citas y aplica presupuesto determinista sin truncar contenido ni llamar a un LLM.
 - Hybrid Search Core interno: orquestación de búsqueda léxica y semántica, fusión por `MemoryItemId`, normalización de pesos, degradación controlada y orden determinista.
 - Semantic Search Core con cosine similarity sobre Vector Index.

@@ -16,5 +16,5 @@ public sealed record MemoryUpdateResult(MemoryStatus Status, MemoryDocument? Doc
 public sealed record MemoryDeleteRequest(string Id);
 public sealed record MemoryDeleteResult(MemoryStatus Status, string? Error = null);
 public sealed record MemoryGetResult(MemoryStatus Status, MemoryDocument? Document = null, string? Error = null);
-public sealed record MemoryQuery(string? Id = null, Guid? KnowledgeDocumentId = null, KnowledgeItemType? ItemType = null, string? ExactContent = null, string? ContentHash = null, string? MetadataKey = null, string? MetadataValue = null, int Limit = 100, int Offset = 0);
+public sealed record MemoryQuery(string? Id = null, Guid? KnowledgeDocumentId = null, Guid? MemoryItemId = null, KnowledgeItemType? ItemType = null, string? ExactContent = null, string? ContentHash = null, string? MetadataKey = null, string? MetadataValue = null, int Limit = 100, int Offset = 0);
 public sealed record MemoryQueryResult(MemoryStatus Status, IReadOnlyList<MemoryDocument>? Documents = null, string? Error = null);

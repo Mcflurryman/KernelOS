@@ -4,6 +4,7 @@
 
 ### Added
 
+- Context Builder Core interno: resuelve referencias de retrieval exclusivamente mediante Memory, prepara citas y aplica presupuesto determinista sin truncar contenido ni llamar a un LLM.
 - Hybrid Search Core interno: orquestación de búsqueda léxica y semántica, fusión por `MemoryItemId`, normalización de pesos, degradación controlada y orden determinista.
 - Semantic Search Core con cosine similarity sobre Vector Index.
 - Vector Index Core In-Memory: contratos, snapshots, filtros administrativos y coexistencia de familias de embeddings.

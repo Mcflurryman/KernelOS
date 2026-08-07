@@ -36,7 +36,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Embeddings Core y Ollama Embeddings Provider local: ✅
 - Vector Index: ✅
 - Semantic Search: ✅
-- Hybrid Search: ⬜ (depende de Search léxico y Semantic Search)
+- Hybrid Search: ✅
 
 ## Fase 5 — Context & Intelligence
 

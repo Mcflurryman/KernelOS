@@ -19,4 +19,4 @@ La API no accede directamente al filesystem. `POST /filesystem/{operation}` dele
 
 La implementación actual incluye chat local sin estado, Tool System, Planner determinista de una tarea explícita y Filesystem Read Only (`search`, `exists`, `metadata`, `resolve`, `list`). Memoria, MCP, tool calling del LLM, escritura y Watch de filesystem, proveedores remotos, voz y visión permanecen fuera de esta fase.
 
-Document Readers Core recibe referencias autorizadas de Filesystem y produce `RawDocument` para Knowledge futuro mediante Registry, Router, ReadService y Readers explícitos. TXT, Markdown, JSON y CSV están implementados; contenido documental no se interpreta como órdenes.
+Document Readers Core recibe referencias autorizadas de Filesystem y produce `RawDocument` mediante Registry, Router, ReadService y Readers explícitos. Knowledge Core transforma ese resultado en `KnowledgeDocument` e items trazables de forma determinista, sin filesystem, LLM ni persistencia. TXT, Markdown, JSON y CSV están implementados; contenido documental no se interpreta como órdenes. Memory, embeddings, RAG y búsqueda semántica siguen pendientes.

@@ -29,15 +29,34 @@ public sealed class FilesystemCapabilityTests : IDisposable
         var resolver = CreateResolver();
 
         Assert.True(resolver.TryResolvePath("Workspace", out var workspace));
-        Assert.True(resolver.TryResolvePath("Desktop", out var desktop));
-        Assert.True(resolver.TryResolvePath("Documents", out var documents));
         Assert.True(Path.IsPathFullyQualified(workspace));
-        Assert.True(Path.IsPathFullyQualified(desktop));
-        Assert.True(Path.IsPathFullyQualified(documents));
+        Assert.All(resolver.ResolveAllowedRoots(), allowedRoot =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(allowedRoot));
+            Assert.True(Path.IsPathFullyQualified(allowedRoot));
+        });
+
+        AssertSpecialAliasContract(resolver, "Desktop", Environment.SpecialFolder.DesktopDirectory);
+        AssertSpecialAliasContract(resolver, "Documents", Environment.SpecialFolder.MyDocuments);
+
         var duplicateOnlyResolver = new FilesystemRootResolver(
             Options.Create(new FilesystemOptions { AllowedRoots = [root, root] }),
             new TestHostEnvironment(root));
         Assert.Single(duplicateOnlyResolver.ResolveAllowedRoots());
+    }
+
+    [Fact]
+    public void UnavailableSpecialFolderIsNotResolvedAsTheWorkingDirectory()
+    {
+        var resolver = new FilesystemRootResolver(
+            Options.Create(new FilesystemOptions { AllowedRoots = ["Workspace", "Desktop"] }),
+            new TestHostEnvironment(root),
+            specialFolder => specialFolder == Environment.SpecialFolder.DesktopDirectory ? string.Empty : Environment.GetFolderPath(specialFolder));
+
+        Assert.False(resolver.TryResolvePath("Desktop", out var resolved));
+        Assert.Equal(string.Empty, resolved);
+        Assert.Single(resolver.ResolveAllowedRoots());
+        Assert.DoesNotContain(Path.GetFullPath(Environment.CurrentDirectory), resolver.ResolveAllowedRoots());
     }
 
     [Theory]
@@ -124,6 +143,37 @@ public sealed class FilesystemCapabilityTests : IDisposable
     private FilesystemRootResolver CreateResolver() => new FilesystemRootResolver(
         Options.Create(new FilesystemOptions { AllowedRoots = [root, "Desktop", "Documents", "Workspace"] }),
         new TestHostEnvironment(root));
+
+    private static void AssertSpecialAliasContract(
+        FilesystemRootResolver resolver,
+        string alias,
+        Environment.SpecialFolder specialFolder)
+    {
+        var specialFolderPath = Environment.GetFolderPath(specialFolder);
+        var shouldBeAvailable = !string.IsNullOrWhiteSpace(specialFolderPath)
+            && Path.IsPathFullyQualified(specialFolderPath)
+            && !IsFilesystemRoot(specialFolderPath);
+
+        Assert.Equal(shouldBeAvailable, resolver.TryResolvePath(alias, out var resolved));
+        if (shouldBeAvailable)
+        {
+            Assert.True(Path.IsPathFullyQualified(resolved));
+        }
+        else
+        {
+            Assert.Equal(string.Empty, resolved);
+        }
+    }
+
+    private static bool IsFilesystemRoot(string path)
+    {
+        var absolutePath = Path.GetFullPath(path);
+        var filesystemRoot = Path.GetPathRoot(absolutePath) ?? string.Empty;
+        return string.Equals(
+            Path.TrimEndingDirectorySeparator(absolutePath),
+            Path.TrimEndingDirectorySeparator(filesystemRoot),
+            StringComparison.OrdinalIgnoreCase);
+    }
 
     private Task<FilesystemOperationResult> RunAsync(
         string operation,

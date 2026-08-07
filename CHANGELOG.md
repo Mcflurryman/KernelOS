@@ -4,6 +4,11 @@
 
 ### Added
 
+- Knowledge Core: modelos, `IKnowledgeBuilder`, transformación determinista, chunking por caracteres, procedencia, hashes y pruebas de integración con Document Readers.
+
+### Fixed
+
+- Resolución portable y segura de aliases especiales de filesystem cuando Desktop o Documents no están disponibles.
 - Document Readers Core para TXT, Markdown, JSON y CSV.
 - DocumentTool, endpoint `POST /documents/read`, límites configurables y hashes SHA-256.
 

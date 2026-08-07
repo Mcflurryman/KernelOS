@@ -3,15 +3,26 @@ using Microsoft.Extensions.Options;
 
 namespace KernelOS.Infrastructure;
 
-public sealed class FilesystemRootResolver(
-    IOptions<FilesystemOptions> options,
-    IHostEnvironment environment) : IFilesystemRootResolver
+public sealed class FilesystemRootResolver : IFilesystemRootResolver
 {
+    private readonly IOptions<FilesystemOptions> options;
+    private readonly IHostEnvironment environment;
+    private readonly Func<Environment.SpecialFolder, string> getSpecialFolderPath;
+
+    public FilesystemRootResolver(
+        IOptions<FilesystemOptions> options,
+        IHostEnvironment environment,
+        Func<Environment.SpecialFolder, string>? getSpecialFolderPath = null)
+    {
+        this.options = options;
+        this.environment = environment;
+        this.getSpecialFolderPath = getSpecialFolderPath ?? Environment.GetFolderPath;
+    }
+
     public IReadOnlyCollection<string> ResolveAllowedRoots() =>
         options.Value.AllowedRoots
             .Select(ResolveRoot)
-            .Where(root => root is not null)
-            .Cast<string>()
+            .OfType<string>()
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
@@ -78,12 +89,42 @@ public sealed class FilesystemRootResolver(
 
     private string? ResolveRoot(string value) => value switch
     {
-        "Desktop" => Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-        "Documents" => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-        "Workspace" => FindWorkspaceRoot(),
-        _ when Path.IsPathFullyQualified(value) => Path.GetFullPath(value),
+        "Desktop" => ResolveSpecialFolder(Environment.SpecialFolder.DesktopDirectory),
+        "Documents" => ResolveSpecialFolder(Environment.SpecialFolder.MyDocuments),
+        "Workspace" => NormalizeRoot(FindWorkspaceRoot()),
+        _ when Path.IsPathFullyQualified(value) => NormalizeRoot(value),
         _ => null
     };
+
+    private string? ResolveSpecialFolder(Environment.SpecialFolder specialFolder) =>
+        NormalizeRoot(getSpecialFolderPath(specialFolder));
+
+    private static string? NormalizeRoot(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || !Path.IsPathFullyQualified(value))
+        {
+            return null;
+        }
+
+        try
+        {
+            var absolutePath = Path.GetFullPath(value);
+            var filesystemRoot = Path.GetPathRoot(absolutePath);
+            if (string.IsNullOrWhiteSpace(filesystemRoot)
+                || string.Equals(
+                    Path.TrimEndingDirectorySeparator(absolutePath),
+                    Path.TrimEndingDirectorySeparator(filesystemRoot),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return absolutePath;
+        }
+        catch (ArgumentException) { return null; }
+        catch (NotSupportedException) { return null; }
+        catch (PathTooLongException) { return null; }
+    }
 
     private string FindWorkspaceRoot()
     {

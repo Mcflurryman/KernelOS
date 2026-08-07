@@ -1,5 +1,7 @@
 # Hoja de ruta
 
+Knowledge Core está completado. Memory, RAG, embeddings y búsqueda semántica continúan pendientes.
+
 1. Base documental y repositorio.
 2. ~~Solución .NET y endpoint de salud.~~ Completada.
 3. ~~Chat con Ollama.~~ Completada.

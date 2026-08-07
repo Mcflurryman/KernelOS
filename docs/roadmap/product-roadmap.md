@@ -10,6 +10,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Buscar documentos por significado y combinar resultados: ✅ (interno; sin endpoint, Tool ni RAG)
 - Preparar contexto y citas seguras desde resultados recuperados: ✅ (interno; consumido por RAG interno)
 - RAG interno basado en contexto recuperado: ✅ (sin endpoint ni Kai Agent)
+- Contexto conversacional reciente por request: ✅ (interno; sin persistencia)
 - Recordar conocimiento tras reiniciar: ⬜
 
 ## Assistant
@@ -17,6 +18,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Conversar localmente con Ollama: ✅
 - Ejecutar una tarea explícita mediante el Planner y una Tool registrada: ✅
 - Usar contexto recuperado, recordar conversaciones y responder con fuentes: ⬜
+- Recordar conversaciones entre sesiones o que Kai recuerde todo lo hablado: ⬜
 - Kai Agent autónomo: ⚪
 
 ## Automation e integraciones

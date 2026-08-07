@@ -1,0 +1,2 @@
+namespace KernelOS.Infrastructure.Conversation;
+public sealed class ConversationContextOptions { public const string SectionName = "ConversationContext"; public int DefaultMaxTokens { get; init; } = 3000; public int MaxAllowedTokens { get; init; } = 8000; public int DefaultMaxTurns { get; init; } = 20; public int MaxAllowedTurns { get; init; } = 100; public float CharactersPerTokenEstimate { get; init; } = 4f; }

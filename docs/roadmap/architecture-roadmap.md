@@ -44,7 +44,8 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 
 - Context Builder y citas/procedencia: ✅
 - RAG Pipeline: ✅
-- Kai Agent, contexto conversacional y política de memoria a largo plazo: ⚪
+- Conversation Context Core (historial reciente por request): ✅
+- Kai Agent Core y política de memoria a largo plazo: ⚪
 - Orquestación y razonamiento más allá del Planner determinista: ⚪
 
 ## Fase 6 — Automation

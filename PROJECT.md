@@ -15,4 +15,4 @@ No están implementados memoria, MCP, herramientas de negocio, escritura de file
 - No se almacenan secretos en Git.
 - Core no depende de Infrastructure, API ni Tools.
 
-Document Readers Core está disponible para TXT, Markdown, JSON y CSV; entrega contenido estructurado a futuro Knowledge, sin lectura de formatos Office/PDF ni almacenamiento de memoria.
+Document Readers Core está disponible para TXT, Markdown, JSON y CSV. Knowledge Core transforma `RawDocument` en unidades estructuradas y trazables sin leer archivos ni persistirlas. No hay Memory, embeddings, RAG ni búsqueda semántica; tampoco formatos Office/PDF.

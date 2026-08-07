@@ -1,6 +1,6 @@
 # Document Readers
 
-> Estado: Document Readers Core implementado para TXT, Markdown, JSON y CSV. PDF, DOCX, XLSX, OCR, Knowledge y Memory permanecen pendientes.
+> Estado: Document Readers Core implementado para TXT, Markdown, JSON y CSV. Knowledge Core consume su `RawDocument`; PDF, DOCX, XLSX, OCR y Memory permanecen pendientes.
 
 La implementación usa contratos en Core, Readers registrados explícitamente, Registry para localización, Router para selección segura, ReadService para delegar autorización al filesystem, `DocumentTool` y `POST /documents/read`. Los límites configurables cubren tamaño, caracteres, filas y columnas; `DOCUMENT_TRUNCATED` e `IRREGULAR_TABLE` son warnings estables. Las respuestas públicas omiten referencias internas.
 

@@ -55,3 +55,7 @@ Los límites se identifican estructuralmente, no por el texto de mensajes; los f
 ```powershell
 Invoke-RestMethod -Uri "http://localhost:PUERTO/documents/read" -Method POST -ContentType "application/json; charset=utf-8" -Body '{"path":"Workspace/testdata/documents/text/sample.txt","format":null}'
 ```
+
+## Knowledge Core
+
+Knowledge Core transforma internamente `RawDocument` en items estructurados de texto, títulos, listas, código, JSON, tablas y metadatos seguros. No expone endpoint ni herramienta todavía. Memory, embeddings, RAG y búsqueda semántica no están implementados.

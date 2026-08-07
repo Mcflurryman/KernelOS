@@ -3,6 +3,8 @@ using KernelOS.Core.Planning;
 using KernelOS.Core.Documents;
 using KernelOS.Infrastructure.Documents;
 using KernelOS.Infrastructure.Documents.Readers;
+using KernelOS.Core.Knowledge;
+using KernelOS.Infrastructure.Knowledge;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -45,6 +47,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDocumentReaderRegistry, DocumentReaderRegistry>();
         services.AddSingleton<IDocumentReaderRouter, DocumentReaderRouter>();
         services.AddSingleton<IDocumentReadService, DocumentReadService>();
+        services.AddOptions<KnowledgeOptions>().Bind(configuration.GetSection(KnowledgeOptions.SectionName)).Validate(o => o.MaxItemCharacters > 0 && o.ChunkOverlapCharacters >= 0 && o.ChunkOverlapCharacters < o.MaxItemCharacters && o.MaxItemsPerDocument > 0, "Knowledge options are invalid.").ValidateOnStart();
+        services.AddSingleton<IKnowledgeBuilder, KnowledgeBuilder>();
 
         return services;
     }

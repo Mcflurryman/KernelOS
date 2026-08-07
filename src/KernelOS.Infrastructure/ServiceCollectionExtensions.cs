@@ -7,6 +7,8 @@ using KernelOS.Core.Knowledge;
 using KernelOS.Infrastructure.Knowledge;
 using KernelOS.Core.Memory;
 using KernelOS.Infrastructure.Memory;
+using KernelOS.Core.Search;
+using KernelOS.Infrastructure.Search;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -53,6 +55,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IKnowledgeBuilder, KnowledgeBuilder>();
         services.AddOptions<MemoryOptions>().Bind(configuration.GetSection(MemoryOptions.SectionName)).Validate(o => o.MaxDocuments > 0 && o.MaxItemsPerDocument > 0 && o.MaxQueryResults > 0, "Memory options are invalid.").ValidateOnStart();
         services.AddSingleton<IMemoryStore, InMemoryMemoryStore>();
+        services.AddOptions<SearchOptions>().Bind(configuration.GetSection(SearchOptions.SectionName)).Validate(o => o.MaxQueryLength > 0 && o.MaxTokens > 0 && o.MaxCandidateDocuments > 0 && o.MaxResults > 0, "Search options are invalid.").ValidateOnStart();
+        services.AddSingleton<ISearchEngine, MemorySearchEngine>();
 
         return services;
     }

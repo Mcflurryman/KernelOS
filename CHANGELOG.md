@@ -4,6 +4,7 @@
 
 ### Added
 
+- Search Engine Core: búsqueda léxica determinista por exacto, tokens y prefijos sobre Memory, con filtros, score explicable y procedencia segura.
 - Memory Core In-Memory: contratos, almacenamiento concurrente, consultas exactas, versionado y pruebas de integración con Knowledge.
 - Knowledge Core: modelos, `IKnowledgeBuilder`, transformación determinista, chunking por caracteres, procedencia, hashes y pruebas de integración con Document Readers.
 

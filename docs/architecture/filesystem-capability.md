@@ -17,7 +17,7 @@ La operación pertenece exclusivamente a la URL. El cuerpo contiene `arguments`,
 
 ## Raíces y seguridad
 
-Las raíces se configuran mediante `Filesystem:AllowedRoots`. Los aliases soportados son `Workspace`, `Desktop` y `Documents`; `Workspace` se resuelve ascendiendo desde el content root hasta `KernelOS.sln`, por lo que apunta a la raíz del repositorio. También se aceptan rutas absolutas dentro de una raíz permitida.
+Las raíces se configuran mediante `Filesystem:AllowedRoots`. `Workspace` se resuelve ascendiendo desde el content root hasta `KernelOS.sln`, por lo que apunta a la raíz del repositorio. Los aliases `Desktop` y `Documents` son opcionales: solo se habilitan si la carpeta especial del sistema devuelve una ruta absoluta válida y no vacía; en entornos headless no disponibles se rechazan. También se aceptan rutas absolutas dentro de una raíz permitida.
 
 La resolución normaliza rutas y exige coincidencia en un límite de segmento. Así se rechazan aliases desconocidos, rutas relativas sin alias, escapes con `..` y prefijos parecidos. La respuesta no expone detalles de excepciones internas.
 

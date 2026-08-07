@@ -19,7 +19,7 @@ La API expone `GET /`, `GET /health`, `GET /health/ollama`, `POST /chat`, endpoi
 
 Las operaciones disponibles son `search`, `exists`, `metadata`, `resolve` y `list`. `operation` se declara solo en la URL; el cuerpo contiene únicamente `arguments`. Todas las solicitudes pasan por `IToolRouter` y `FilesystemTool`.
 
-`Workspace` es la raíz controlada del repositorio. También se soportan los aliases configurados `Desktop` y `Documents`, y rutas absolutas dentro de `Filesystem:AllowedRoots`. Se rechazan rutas relativas sin alias, escapes con `..` y prefijos de ruta similares. Para una ruta autorizada inexistente, `exists` devuelve HTTP 200 con `exists: false`.
+`Workspace` es la raíz controlada del repositorio. Los aliases configurados `Desktop` y `Documents` se habilitan únicamente si el sistema los resuelve a rutas absolutas válidas; si no están disponibles, se rechazan. También se aceptan rutas absolutas dentro de `Filesystem:AllowedRoots`. Se rechazan rutas relativas sin alias, escapes con `..` y prefijos de ruta similares. Para una ruta autorizada inexistente, `exists` devuelve HTTP 200 con `exists: false`.
 
 Ejemplos PowerShell de una sola línea (sustituye `PUERTO` por el mostrado al iniciar la API):
 

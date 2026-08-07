@@ -1,7 +1,9 @@
 # Planner
 
-> Estado: `IPlanner` y `KernelPlanner` están implementados como núcleo determinista. Reciben un Goal explícito, construyen una única Task y la ejecutan únicamente a través de `IToolRouter`.
+> Estado: planificación y ejecución están separadas. `IPlanner` es una fachada de planificación pura sobre `IPlanBuilder`; `IPlanExecutor` es la única capa del Planner que invoca `IToolRouter`.
 
-El Planner organiza ejecución; no conversa, no razona como Kai, no accede a recursos externos y no inventa Tools, permisos o capacidades. La API expone `POST /planner/execute` para este flujo acotado.
+`IPlanBuilder.BuildAsync` valida un `Goal` explícito y construye un `Plan` determinista, con identificadores, argumentos preservados y estado `Planned`. No depende del router, de Tools concretas ni de infraestructura de entrada/salida, por lo que construir un plan no produce efectos laterales.
 
-El núcleo actual preserva separación entre Goal, Plan, Task, Action y resultado controlado. No implementa planificación automática, múltiples Tasks, estrategias basadas en LLM, replanificación, persistencia/reanudación, memoria conversacional, Scheduler ni políticas completas de confirmación. Estas capas futuras deberán mantener la misma frontera: toda acción externa pasa por Tools autorizadas.
+`IPlanExecutor.ExecuteAsync` recibe un plan ya construido. Antes de ejecutar, valida por completo el plan, sus tareas, identificadores, argumentos y estado `Planned`; un plan inválido no llega al router. La ejecución v1 es secuencial y fail-fast: tras un fallo o cancelación no se procesan tareas posteriores. Los estados son `Planning` → `Planned` → `Executing` → `Completed`, con salidas `Failed` o `Cancelled`.
+
+`POST /planner/execute` conserva la operación explícita existente, pero compone visiblemente `IPlanner` e `IPlanExecutor`; no oculta ejecución dentro de `IPlanner.PlanAsync`. Aún no hay endpoint separado de creación, persistencia, reanudación, replanificación, confirmación humana ni políticas de permisos.

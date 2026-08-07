@@ -5,7 +5,8 @@ KernelOS es un monolito modular .NET 8. `KernelOS.Core` contiene contratos; `Ker
 ```text
 HTTP API
  ├─ Chat → IChatModel → OllamaChatModel
- ├─ Planner → KernelPlanner → IToolRouter → Tools
+ ├─ Planner → IPlanner/IPlanBuilder → Plan (sin efectos laterales)
+ │              └─ IPlanExecutor → IToolRouter → Tools
  └─ Filesystem / Document endpoints → IToolRouter
                                       ├─ FilesystemTool → Filesystem Capability
                                       └─ DocumentTool → Document Readers
@@ -26,8 +27,8 @@ future Kai Agent ─────────────────────
                                                         └────→ conversation policy
 ```
 
-Chat, Tool System, Planner determinista de una tarea, Filesystem Read Only, Document Readers para TXT/Markdown/JSON/CSV, Knowledge Core, Memory Core In-Memory, retrieval, Context Builder, RAG Pipeline y Conversation Context están implementados. Son internos: no tienen endpoint ni Tool pública.
+Chat, Tool System, Planner determinista con construcción y ejecución separadas, Filesystem Read Only, Document Readers para TXT/Markdown/JSON/CSV, Knowledge Core, Memory Core In-Memory, retrieval, Context Builder, RAG Pipeline, Conversation Context y Kai Agent Core v1 están implementados. Kai no ejecuta Planner ni Tools; confirmación y política de ejecución siguen pendientes. Knowledge, retrieval, Context Builder y RAG son internos: no tienen endpoint ni Tool pública.
 
 Filesystem no accede a rutas no autorizadas. Document Readers reciben referencias autorizadas y el contenido documental es no confiable. Ollama es local en la configuración actual; chat y embeddings usan clientes y modelos separados.
 
-Las siguientes capas no existen todavía y no deben inferirse del diagrama: Kai Agent, Scheduler, Windows Automation, MCP, integraciones de correo/calendario, OCR, Vision, voz y UI. El orden de evolución está en el [Architecture Roadmap](../roadmap/architecture-roadmap.md).
+Las siguientes capas no existen todavía y no deben inferirse del diagrama: confirmación/política de ejecución, orquestación Planner de Kai, Scheduler, Windows Automation, MCP, integraciones de correo/calendario, OCR, Vision, voz y UI. El orden de evolución está en el [Architecture Roadmap](../roadmap/architecture-roadmap.md).

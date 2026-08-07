@@ -2,7 +2,7 @@
 
 > Estado: implementado como transformación interna determinista; no tiene endpoint ni herramienta pública.
 
-Knowledge Core transforma un `RawDocument` ya leído en un `KnowledgeDocument` con `KnowledgeItem` homogéneos y consultables. El flujo es `Filesystem -> Document Readers -> RawDocument -> Knowledge Core -> futura Memory/Search/Planner/Kai`.
+Knowledge Core transforma un `RawDocument` ya leído en un `KnowledgeDocument` con `KnowledgeItem` homogéneos y consultables. El flujo disponible es `Filesystem -> Document Readers -> RawDocument -> Knowledge Core -> Memory Core -> Search Engine Core`; Planner y Kai son consumidores futuros.
 
 ## Fronteras y responsabilidades
 

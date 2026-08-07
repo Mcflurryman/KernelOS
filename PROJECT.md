@@ -1,18 +1,26 @@
 # Proyecto KernelOS
 
-KernelOS es una plataforma personal de IA local; Kai es el asistente que opera sobre ella. Se desarrolla en C# y .NET, priorizando privacidad, modularidad, seguridad y revisión de cambios.
+## Propósito
 
-## Estado actual
+KernelOS es una plataforma local-first para construir un asistente personal llamado Kai. Busca que la persona usuaria mantenga control sobre sus datos, modelos, acciones y permisos, sin acoplar las decisiones de producto a un proveedor concreto.
 
-La solución .NET 8 incluye API mínima, salud, chat mediante `IChatModel` con Ollama como proveedor actual, Tool System, Planner determinista inicial y Filesystem Capability Read Only. Filesystem usa `FilesystemTool` e `IToolRouter` para `search`, `exists`, `metadata`, `resolve` y `list`, con raices configuradas y sin operaciones de escritura.
+## Visión
 
-No están implementados persistencia de memoria, MCP, herramientas de negocio, escritura de filesystem, proveedores remotos, voz, visión ni interfaz gráfica.
+KernelOS podrá ayudar a conversar, recuperar conocimiento personal, planificar trabajo y ejecutar acciones autorizadas. Esa evolución será gradual: una capacidad no se considera disponible hasta que sus fronteras de seguridad, contratos, pruebas y documentación existan.
 
 ## Principios
 
-- El modelo no ejecuta acciones directamente; solicita herramientas controladas.
-- Las acciones sensibles o destructivas requieren autorización explícita.
-- No se almacenan secretos en Git.
-- Core no depende de Infrastructure, API ni Tools.
+- Local-first y minimización de datos; cualquier proveedor remoto requerirá una decisión explícita.
+- Los modelos no ejecutan acciones directamente: pasan por contratos, Tools y autorizaciones controladas.
+- Core no depende de Infrastructure, Api ni Tools; las integraciones quedan en los bordes.
+- Seguridad, mantenibilidad y revisión prevalecen sobre velocidad o automatización prematura.
 
-Document Readers Core está disponible para TXT, Markdown, JSON y CSV. Knowledge Core transforma `RawDocument` en unidades estructuradas y trazables. Memory Core In-Memory almacena Knowledge de forma determinista y efímera, Search Engine Core añade búsqueda léxica interna y Embeddings Core aporta contratos sin proveedor real. No hay persistencia, Ollama embeddings, RAG ni búsqueda semántica, ni formatos Office/PDF.
+## Arquitectura conceptual
+
+La plataforma separa contratos independientes en Core, implementaciones y proveedores locales en Infrastructure, Tools como frontera de acciones y Api como borde HTTP. El flujo de conocimiento previsto es Filesystem autorizado → Document Readers → Knowledge → Memory → Retrieval → Context para Kai. Las capas existentes y sus límites se describen en la documentación de arquitectura.
+
+## Objetivos y no objetivos actuales
+
+El objetivo presente es consolidar los componentes locales ya entregados: chat, acciones controladas, ingestión documental, memoria efímera, búsqueda léxica y generación de embeddings. No son objetivos actuales Vector Index, búsqueda semántica, RAG, automatización general, proveedores cloud, UI, voz, visión ni persistencia de memoria.
+
+La evolución futura y sus dependencias se mantienen en el [Roadmap](docs/roadmap/roadmap.md), no en este documento.

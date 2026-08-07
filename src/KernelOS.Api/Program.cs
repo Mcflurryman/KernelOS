@@ -46,7 +46,7 @@ app.MapGet("/health", () => Results.Ok(new SystemStatusResponse(
     Status: "ok",
     Application: "KernelOS",
     Assistant: "Kai",
-    Version: "0.1.0")));
+    Version: GetProductVersion())));
 
 app.MapGet("/health/ollama", async (
     IOllamaHealthCheck healthCheck,
@@ -190,6 +190,19 @@ static object CreateToolDescription(IKernelTool tool) => new
     capabilities = tool.Capabilities,
     parameters = tool.Parameters
 };
+
+static string GetProductVersion()
+{
+    var informationalVersion = typeof(Program).Assembly
+        .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), inherit: false)
+        .OfType<System.Reflection.AssemblyInformationalVersionAttribute>()
+        .SingleOrDefault()
+        ?.InformationalVersion;
+
+    return string.IsNullOrWhiteSpace(informationalVersion)
+        ? "unknown"
+        : informationalVersion.Split('+', 2)[0];
+}
 
 public partial class Program;
 

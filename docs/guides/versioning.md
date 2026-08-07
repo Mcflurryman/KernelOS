@@ -10,3 +10,5 @@ La versión actual es `0.4.0`, centralizada en `Directory.Build.props`. Solo se 
 - `0.4.0`: Filesystem Read Only.
 
 Este documento no crea tags, releases ni paquetes.
+
+`GET /health` obtiene la versión desde `AssemblyInformationalVersionAttribute`, generado a partir de esa configuración. Si la metadata de build añade un sufijo `+...`, el endpoint devuelve únicamente la versión SemVer de producto; por tanto, un futuro cambio de `Version` en `Directory.Build.props` se refleja sin modificar la API.

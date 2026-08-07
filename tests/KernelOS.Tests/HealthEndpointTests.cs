@@ -1,4 +1,7 @@
 using System.Net;
+using System.Net.Http.Json;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using KernelOS.Core;
 using KernelOS.Tools;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -30,6 +33,26 @@ public sealed class HealthEndpointTests(WebApplicationFactory<Program> factory)
         var content = await (await factory.CreateClient().GetAsync("/health")).Content.ReadAsStringAsync();
 
         Assert.Contains("Kai", content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetHealthReturnsProductVersionFromAssemblyMetadata()
+    {
+        var status = await (await factory.CreateClient().GetAsync("/health"))
+            .Content.ReadFromJsonAsync<SystemStatusResponse>();
+        var informationalVersion = typeof(Program).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+        var expectedVersion = informationalVersion?.Split('+', 2)[0];
+
+        Assert.NotNull(status);
+        Assert.Equal("ok", status.Status);
+        Assert.Equal("KernelOS", status.Application);
+        Assert.Equal("Kai", status.Assistant);
+        Assert.False(string.IsNullOrWhiteSpace(status.Version));
+        Assert.NotEqual("0.1.0", status.Version);
+        Assert.Equal(expectedVersion, status.Version);
+        Assert.Matches(new Regex("^\\d+\\.\\d+\\.\\d+$"), status.Version);
     }
 }
 

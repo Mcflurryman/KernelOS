@@ -4,6 +4,7 @@
 
 ### Added
 
+- Hybrid Search Core interno: orquestación de búsqueda léxica y semántica, fusión por `MemoryItemId`, normalización de pesos, degradación controlada y orden determinista.
 - Semantic Search Core con cosine similarity sobre Vector Index.
 - Vector Index Core In-Memory: contratos, snapshots, filtros administrativos y coexistencia de familias de embeddings.
 - OllamaEmbeddingGenerator local mediante `/api/embed`, batch nativo, validación dimensional y configuración condicional por proveedor.

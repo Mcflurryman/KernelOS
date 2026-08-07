@@ -10,6 +10,7 @@ using KernelOS.Infrastructure.Memory;
 using KernelOS.Core.Search;
 using KernelOS.Infrastructure.Search;
 using KernelOS.Infrastructure.Embeddings;
+using KernelOS.Core.Embeddings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,6 +19,7 @@ namespace KernelOS.Infrastructure;
 public static class ServiceCollectionExtensions
 {
     public const string OllamaHttpClientName = "Ollama";
+    public const string OllamaEmbeddingHttpClientName = "OllamaEmbeddings";
 
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
@@ -58,7 +60,18 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMemoryStore, InMemoryMemoryStore>();
         services.AddOptions<SearchOptions>().Bind(configuration.GetSection(SearchOptions.SectionName)).Validate(o => o.MaxQueryLength > 0 && o.MaxTokens > 0 && o.MaxCandidateDocuments > 0 && o.MaxResults > 0, "Search options are invalid.").ValidateOnStart();
         services.AddSingleton<ISearchEngine, MemorySearchEngine>();
-        services.AddOptions<EmbeddingOptions>().Bind(configuration.GetSection(EmbeddingOptions.SectionName)).Validate(o => o.MaxInputCharacters > 0 && o.MaxBatchSize > 0 && o.ExpectedDimensions > 0, "Embeddings options are invalid.").ValidateOnStart();
+        services.AddOptions<EmbeddingOptions>().Bind(configuration.GetSection(EmbeddingOptions.SectionName)).Validate(o => o.MaxInputCharacters > 0 && o.MaxBatchSize > 0 && o.ExpectedDimensions > 0 && o.TimeoutSeconds > 0 && (!string.Equals(o.Provider, "ollama", StringComparison.OrdinalIgnoreCase) || (Uri.TryCreate(o.BaseUrl, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) && !string.IsNullOrWhiteSpace(o.Model))) && (string.IsNullOrWhiteSpace(o.Provider) || string.Equals(o.Provider, "none", StringComparison.OrdinalIgnoreCase) || string.Equals(o.Provider, "ollama", StringComparison.OrdinalIgnoreCase)), "Embeddings options are invalid.").ValidateOnStart();
+        var embeddingProvider = configuration.GetSection(EmbeddingOptions.SectionName).GetValue<string>(nameof(EmbeddingOptions.Provider));
+        if (string.Equals(embeddingProvider, "ollama", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddHttpClient(OllamaEmbeddingHttpClientName, (serviceProvider, client) =>
+            {
+                var embeddingOptions = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmbeddingOptions>>().Value;
+                client.BaseAddress = new Uri(embeddingOptions.BaseUrl.TrimEnd('/') + "/", UriKind.Absolute);
+                client.Timeout = TimeSpan.FromSeconds(embeddingOptions.TimeoutSeconds);
+            });
+            services.AddSingleton<IEmbeddingGenerator, OllamaEmbeddingGenerator>();
+        }
 
         return services;
     }

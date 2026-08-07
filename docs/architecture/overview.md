@@ -1,22 +1,23 @@
-# Arquitectura de alto nivel
+# Arquitectura actual
 
-KernelOS es un monolito modular .NET 8. `KernelOS.Core` contiene contratos y modelos independientes; `KernelOS.Infrastructure` implementa Ollama, filesystem local y configuración; `KernelOS.Tools` contiene las herramientas; `KernelOS.Api` expone HTTP; `KernelOS.Tests` valida contratos y límites públicos.
+KernelOS es un monolito modular .NET 8. `KernelOS.Core` contiene contratos; `KernelOS.Infrastructure` implementa proveedores y almacenamiento local; `KernelOS.Tools` delimita acciones; `KernelOS.Api` expone HTTP; `KernelOS.Tests` prueba contratos y límites.
 
-```mermaid
-flowchart LR
-  Client --> Api[KernelOS.Api]
-  Api --> Chat[IChatModel]
-  Chat --> Ollama[OllamaChatModel]
-  Api --> Router[IToolRouter]
-  Router --> Tools[IKernelTool]
-  Tools --> FsTool[FilesystemTool]
-  FsTool --> FsCapability[IFilesystemCapability]
-  FsCapability --> LocalFs[LocalFilesystemCapability]
-  FsCapability --> Roots[FilesystemRootResolver]
+```text
+HTTP API
+ ├─ Chat → IChatModel → OllamaChatModel
+ ├─ Planner → KernelPlanner → IToolRouter → Tools
+ └─ Filesystem / Document endpoints → IToolRouter
+                                      ├─ FilesystemTool → Filesystem Capability
+                                      └─ DocumentTool → Document Readers
+
+Filesystem autorizado → Document Readers → RawDocument → Knowledge Core
+                                                     → Memory Core → Lexical Search
+
+Embeddings Core → Ollama Embeddings Provider (opcional, independiente de Search)
 ```
 
-La API no accede directamente al filesystem. `POST /filesystem/{operation}` delega siempre en `IToolRouter`; FilesystemTool es la única herramienta de filesystem y `LocalFilesystemCapability` es la implementación local actual. El resolver autoriza aliases y rutas absolutas frente a `AllowedRoots` antes de llamar a APIs de disco.
+Chat, Tool System, Planner determinista de una tarea, Filesystem Read Only, Document Readers para TXT/Markdown/JSON/CSV, Knowledge Core, Memory Core In-Memory, Search Engine Core léxico y Embeddings Core/Ollama Embeddings Provider están implementados. Knowledge, Memory, Search y Embeddings son internos: no tienen endpoint ni Tool pública.
 
-La implementación actual incluye chat local sin estado, Tool System, Planner determinista de una tarea explícita y Filesystem Read Only (`search`, `exists`, `metadata`, `resolve`, `list`). Memoria, MCP, tool calling del LLM, escritura y Watch de filesystem, proveedores remotos, voz y visión permanecen fuera de esta fase.
+Filesystem no accede a rutas no autorizadas. Document Readers reciben referencias autorizadas y el contenido documental es no confiable. Ollama es local en la configuración actual; chat y embeddings usan clientes y modelos separados.
 
-Document Readers Core recibe referencias autorizadas de Filesystem y produce `RawDocument` mediante Registry, Router, ReadService y Readers explícitos. Knowledge Core transforma ese resultado en `KnowledgeDocument` e items trazables. Memory Core In-Memory almacena snapshots y Search Engine Core consulta sus items léxicamente. Embeddings Core define contratos de vectores sin proveedor runtime ni índice, siempre sin filesystem, LLM ni persistencia. TXT, Markdown, JSON y CSV están implementados; contenido documental no se interpreta como órdenes. RAG y búsqueda semántica siguen pendientes.
+Las siguientes capas no existen todavía y no deben inferirse del diagrama: Vector Index, Semantic Search, Hybrid Search, Context Builder, RAG, Kai Agent, Scheduler, Windows Automation, MCP, integraciones de correo/calendario, OCR, Vision, voz y UI. El orden de evolución está en el [Architecture Roadmap](../roadmap/architecture-roadmap.md).

@@ -1,6 +1,6 @@
 # Hoja de ruta
 
-Knowledge Core está completado. Memory, RAG, embeddings y búsqueda semántica continúan pendientes.
+Knowledge Core y Memory Core In-Memory están completados. Persistencia, RAG, embeddings y búsqueda semántica continúan pendientes.
 
 1. Base documental y repositorio.
 2. ~~Solución .NET y endpoint de salud.~~ Completada.

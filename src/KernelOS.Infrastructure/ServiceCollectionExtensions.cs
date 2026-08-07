@@ -5,6 +5,8 @@ using KernelOS.Infrastructure.Documents;
 using KernelOS.Infrastructure.Documents.Readers;
 using KernelOS.Core.Knowledge;
 using KernelOS.Infrastructure.Knowledge;
+using KernelOS.Core.Memory;
+using KernelOS.Infrastructure.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -49,6 +51,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDocumentReadService, DocumentReadService>();
         services.AddOptions<KnowledgeOptions>().Bind(configuration.GetSection(KnowledgeOptions.SectionName)).Validate(o => o.MaxItemCharacters > 0 && o.ChunkOverlapCharacters >= 0 && o.ChunkOverlapCharacters < o.MaxItemCharacters && o.MaxItemsPerDocument > 0, "Knowledge options are invalid.").ValidateOnStart();
         services.AddSingleton<IKnowledgeBuilder, KnowledgeBuilder>();
+        services.AddOptions<MemoryOptions>().Bind(configuration.GetSection(MemoryOptions.SectionName)).Validate(o => o.MaxDocuments > 0 && o.MaxItemsPerDocument > 0 && o.MaxQueryResults > 0, "Memory options are invalid.").ValidateOnStart();
+        services.AddSingleton<IMemoryStore, InMemoryMemoryStore>();
 
         return services;
     }

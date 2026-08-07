@@ -16,7 +16,8 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 ## Assistant
 
 - Conversar localmente con Ollama: ✅
-- Ejecutar una tarea explícita mediante el Planner y una Tool registrada: ✅
+- Construir un plan explícito sin ejecutarlo y ejecutar un plan validado mediante una Tool registrada: ✅
+- Kai Agent Core v1 para Chat/RAG; modo Planner todavía no disponible: ✅
 - Usar contexto recuperado, recordar conversaciones y responder con fuentes: ⬜
 - Recordar conversaciones entre sesiones o que Kai recuerde todo lo hablado: ⬜
 - Kai Agent autónomo: ⚪

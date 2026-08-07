@@ -132,7 +132,7 @@ app.MapPost("/tools/{name}", async (
     };
 });
 
-app.MapPost("/planner/execute", async (PlannerExecuteApiRequest? request, IPlanner planner, CancellationToken cancellationToken) =>
+app.MapPost("/planner/execute", async (PlannerExecuteApiRequest? request, IPlanner planner, IPlanExecutor executor, CancellationToken cancellationToken) =>
 {
     if (string.IsNullOrWhiteSpace(request?.Goal) || string.IsNullOrWhiteSpace(request.Tool)) return Results.BadRequest(new { error = "goal and tool are required." });
     var metadata = new Dictionary<string, System.Text.Json.JsonElement>
@@ -140,7 +140,15 @@ app.MapPost("/planner/execute", async (PlannerExecuteApiRequest? request, IPlann
         ["tool"] = System.Text.Json.JsonSerializer.SerializeToElement(request.Tool),
         ["arguments"] = System.Text.Json.JsonSerializer.SerializeToElement(request.Arguments ?? new Dictionary<string, System.Text.Json.JsonElement>())
     };
-    var result = await planner.PlanAsync(new Goal(Guid.NewGuid(), request.Goal, DateTimeOffset.UtcNow, 0, metadata), cancellationToken);
+    var planningResult = await planner.PlanAsync(new Goal(Guid.NewGuid(), request.Goal, DateTimeOffset.UtcNow, 0, metadata), cancellationToken);
+    if (planningResult.Status != PlannerStatus.Planned || planningResult.Plan is null)
+    {
+        return planningResult.Status == PlannerStatus.Cancelled
+            ? Results.Json(planningResult, statusCode: 499)
+            : Results.BadRequest(planningResult);
+    }
+
+    var result = await executor.ExecuteAsync(planningResult.Plan, cancellationToken);
     return result.Status switch
     {
         PlannerStatus.Completed => Results.Ok(result),

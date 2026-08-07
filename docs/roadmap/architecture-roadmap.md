@@ -15,7 +15,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 
 - `IChatModel` y Ollama Chat provider: ✅
 - Tool System, registro y router: ✅
-- Planner determinista de una tarea explícita: ✅
+- Planner determinista de una tarea explícita, separado de ejecución: ✅
 - Filesystem Capability Read Only y raíces autorizadas: ✅
 
 ## Fase 3 — Knowledge Ingestion
@@ -45,13 +45,16 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Context Builder y citas/procedencia: ✅
 - RAG Pipeline: ✅
 - Conversation Context Core (historial reciente por request): ✅
-- Kai Agent Core y política de memoria a largo plazo: ⚪
+- Kai Agent Core v1 (Chat/RAG; Planner no disponible): ✅
+- Política de memoria a largo plazo: ⚪
 - Orquestación y razonamiento más allá del Planner determinista: ⚪
 
 ## Fase 6 — Automation
 
 **Objetivo:** ejecutar trabajo autorizado y observable. **Dependencia:** Kai Agent, permisos y confirmaciones. **Estado:** ⚪
 
+- Tool Confirmation & Execution Policy: ⚪ (siguiente milestone)
+- Kai Planner Orchestration: ⚪ (posterior a confirmación y políticas)
 - Task Executor, Scheduler, trabajos en segundo plano y notificaciones: ⚪
 - Políticas de permisos y confirmaciones para acciones sensibles: ⚪
 

@@ -1,3 +1,3 @@
 namespace KernelOS.Core.Planning;
 
-public enum PlannerStatus { Created, Planning, Executing, Completed, Failed, Cancelled }
+public enum PlannerStatus { Created, Planning, Planned, Executing, Completed, Failed, Cancelled }

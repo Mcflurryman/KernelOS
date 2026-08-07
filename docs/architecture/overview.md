@@ -18,9 +18,15 @@ Memory Core → Lexical Search ────────────────�
 Embedding query → IEmbeddingGenerator → Semantic Search ──────────────────────┼→ Hybrid Search
                                                                                ┘
 Hybrid Search references → Context Builder → ContextPack → RAG Pipeline → IChatModel
+
+Conversation History → Conversation Context ───────────────→ future Kai Agent
+CurrentUserMessage ────────────────────────────────────────→ future Kai Agent
+                                                        ┌────→ RAG Pipeline
+future Kai Agent ───────────────────────────────────────┼────→ Chat / Planner / Tools
+                                                        └────→ conversation policy
 ```
 
-Chat, Tool System, Planner determinista de una tarea, Filesystem Read Only, Document Readers para TXT/Markdown/JSON/CSV, Knowledge Core, Memory Core In-Memory, retrieval, Context Builder y RAG Pipeline están implementados. Son internos: no tienen endpoint ni Tool pública.
+Chat, Tool System, Planner determinista de una tarea, Filesystem Read Only, Document Readers para TXT/Markdown/JSON/CSV, Knowledge Core, Memory Core In-Memory, retrieval, Context Builder, RAG Pipeline y Conversation Context están implementados. Son internos: no tienen endpoint ni Tool pública.
 
 Filesystem no accede a rutas no autorizadas. Document Readers reciben referencias autorizadas y el contenido documental es no confiable. Ollama es local en la configuración actual; chat y embeddings usan clientes y modelos separados.
 

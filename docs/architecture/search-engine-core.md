@@ -8,6 +8,6 @@ Los filtros exactos por tipo, documento de Knowledge, documento de Memory y prop
 
 El score entero es explicable: exacto +100, prefijo +40, +10 por token exacto, título +5, metadata filtrada +5 y posición inicial +2/+1. Cada componente se expone en `SearchScore`.
 
-El servicio es singleton sin estado mutable por solicitud y depende del singleton `IMemoryStore`. El contenido, incluidos prompt injections, sigue siendo dato no confiable; se conserva procedencia segura y no se registran queries o contenido completos. Embeddings Core define los contratos de vectores; vector DB, semantic search y RAG podrán coexistir en un motor futuro que combine resultados léxicos y semánticos sin cambiar los contratos de Memory.
+El servicio es singleton sin estado mutable por solicitud y depende del singleton `IMemoryStore`. El contenido, incluidos prompt injections, sigue siendo dato no confiable; se conserva procedencia segura y no se registran queries o contenido completos. Embeddings Core y Vector Index Core están separados de Search; Semantic Search y RAG podrán combinar resultados léxicos y semánticos en una capa futura sin cambiar los contratos de Memory.
 
 No existe `SearchTool` ni endpoint: antes se requiere una política de permisos y un Context Builder/RAG estable.

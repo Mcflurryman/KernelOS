@@ -4,9 +4,9 @@ KernelOS es una plataforma personal de IA local. Kai es el asistente previsto so
 
 ## Estado actual
 
-Están implementados chat local mediante Ollama, Tool System, Planner determinista inicial, Filesystem Capability Read Only, Document Readers (TXT, Markdown, JSON y CSV), Knowledge Core, Memory Core In-Memory, Search Engine Core léxico y Embeddings Core con proveedor local Ollama opcional.
+Están implementados chat local mediante Ollama, Tool System, Planner determinista inicial, Filesystem Capability Read Only, Document Readers (TXT, Markdown, JSON y CSV), Knowledge Core, Memory Core In-Memory, Search Engine Core léxico, Embeddings Core con proveedor local Ollama opcional y Vector Index Core In-Memory.
 
-La búsqueda semántica no existe todavía: faltan Vector Index, Semantic Search, Hybrid Search, Context Builder y RAG. Tampoco existen Kai Agent, Scheduler, automatización de Windows, MCP, integraciones de correo/calendario, OCR, voz o UI.
+La búsqueda semántica no existe todavía: faltan Semantic Search, Hybrid Search, Context Builder y RAG. Tampoco existen Kai Agent, Scheduler, automatización de Windows, MCP, integraciones de correo/calendario, OCR, voz o UI.
 
 ## Requisitos y ejecución
 

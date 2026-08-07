@@ -21,6 +21,6 @@ La plataforma separa contratos independientes en Core, implementaciones y provee
 
 ## Objetivos y no objetivos actuales
 
-El objetivo presente es consolidar los componentes locales ya entregados: chat, acciones controladas, ingestión documental, memoria efímera, búsqueda léxica y generación de embeddings. No son objetivos actuales Vector Index, búsqueda semántica, RAG, automatización general, proveedores cloud, UI, voz, visión ni persistencia de memoria.
+El objetivo presente es consolidar los componentes locales ya entregados: chat, acciones controladas, ingestión documental, memoria efímera, búsqueda léxica, generación de embeddings y Vector Index In-Memory. No son objetivos actuales búsqueda semántica, RAG, automatización general, proveedores cloud, UI, voz, visión ni persistencia de memoria.
 
 La evolución futura y sus dependencias se mantienen en el [Roadmap](docs/roadmap/roadmap.md), no en este documento.

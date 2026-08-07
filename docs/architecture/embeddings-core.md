@@ -8,4 +8,4 @@ Los vectores copian sus valores al construirse y exponen una colección de solo 
 
 `OllamaEmbeddingGenerator` es el primer proveedor local y se registra solo cuando `Embeddings:Provider=ollama`; `none` o vacío conserva el arranque sin generador. El fake determinista existe exclusivamente en tests. Un proveedor remoto requerirá decisión y configuración explícitas por privacidad.
 
-Batching conserva orden e IDs, rechaza IDs duplicados como `InvalidInput`, admite resultados parciales explícitos y respeta límites/cancelación. No existe Vector Index, similitud, semantic search, RAG, API o Tool. Un índice futuro tendrá ciclo de vida separado para poder regenerar vectores al cambiar de modelo incompatible.
+Batching conserva orden e IDs, rechaza IDs duplicados como `InvalidInput`, admite resultados parciales explícitos y respeta límites/cancelación. Vector Index Core consume `EmbeddingVector` por IDs y conserva un ciclo de vida separado; no existe similitud, Semantic Search, RAG, API ni Tool.

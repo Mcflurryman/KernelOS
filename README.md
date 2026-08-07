@@ -67,3 +67,7 @@ Memory Core In-Memory almacena snapshots versionados de Knowledge internamente y
 ## Search Engine Core
 
 Search Engine Core ofrece búsqueda léxica interna, determinista y explicable sobre Memory: exacta, por tokens y prefijos con filtros seguros. No expone endpoint ni herramienta. Embeddings, vector DB, búsqueda semántica y RAG no están implementados.
+
+## Embeddings Core
+
+Están implementados los contratos y la arquitectura de Embeddings Core, no un proveedor real. Ollama embeddings, vector index, embeddings semánticos y RAG siguen sin implementar; no existe endpoint ni herramienta pública.

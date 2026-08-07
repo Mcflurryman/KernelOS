@@ -8,7 +8,8 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Transformar documentos leídos en Knowledge y conservarlo en memoria de proceso: ✅ (interno; sin endpoint de Knowledge/Memory)
 - Buscar conocimiento por coincidencia exacta, tokens y prefijos: ✅ (interno; no es búsqueda semántica)
 - Buscar documentos por significado y combinar resultados: ✅ (interno; sin endpoint, Tool ni RAG)
-- Preparar contexto y citas seguras desde resultados recuperados: ✅ (interno; sin RAG ni Chat)
+- Preparar contexto y citas seguras desde resultados recuperados: ✅ (interno; consumido por RAG interno)
+- RAG interno basado en contexto recuperado: ✅ (sin endpoint ni Kai Agent)
 - Recordar conocimiento tras reiniciar: ⬜
 
 ## Assistant

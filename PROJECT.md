@@ -15,4 +15,4 @@ No están implementados persistencia de memoria, MCP, herramientas de negocio, e
 - No se almacenan secretos en Git.
 - Core no depende de Infrastructure, API ni Tools.
 
-Document Readers Core está disponible para TXT, Markdown, JSON y CSV. Knowledge Core transforma `RawDocument` en unidades estructuradas y trazables. Memory Core In-Memory almacena Knowledge de forma determinista y efímera, y Search Engine Core añade búsqueda léxica interna. No hay persistencia, embeddings, RAG ni búsqueda semántica, ni formatos Office/PDF.
+Document Readers Core está disponible para TXT, Markdown, JSON y CSV. Knowledge Core transforma `RawDocument` en unidades estructuradas y trazables. Memory Core In-Memory almacena Knowledge de forma determinista y efímera, Search Engine Core añade búsqueda léxica interna y Embeddings Core aporta contratos sin proveedor real. No hay persistencia, Ollama embeddings, RAG ni búsqueda semántica, ni formatos Office/PDF.

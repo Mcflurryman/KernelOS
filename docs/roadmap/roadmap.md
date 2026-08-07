@@ -1,6 +1,6 @@
 # Hoja de ruta
 
-Knowledge Core, Memory Core In-Memory y Search Engine Core están completados. Persistencia, RAG, embeddings y búsqueda semántica continúan pendientes.
+Knowledge Core, Memory Core In-Memory, Search Engine Core y la abstracción Embeddings Core están completados. Proveedor Ollama embeddings, Vector Index, persistencia, RAG y búsqueda semántica continúan pendientes.
 
 1. Base documental y repositorio.
 2. ~~Solución .NET y endpoint de salud.~~ Completada.

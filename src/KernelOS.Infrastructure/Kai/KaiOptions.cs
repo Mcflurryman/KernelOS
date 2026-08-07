@@ -1,0 +1,1 @@
+using KernelOS.Core.Kai; namespace KernelOS.Infrastructure.Kai; public sealed class KaiOptions { public const string SectionName="Kai"; public int MaxMessageCharacters{get;init;}=4000; public KaiMode DefaultMode{get;init;}=KaiMode.Auto; public bool AllowAutoRagFallbackToChat{get;init;}=true; public bool AllowPlannerInAuto{get;init;} }

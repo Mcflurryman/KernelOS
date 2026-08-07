@@ -13,6 +13,8 @@ using KernelOS.Infrastructure.Embeddings;
 using KernelOS.Core.Embeddings;
 using KernelOS.Core.VectorIndex;
 using KernelOS.Infrastructure.VectorIndex;
+using KernelOS.Core.SemanticSearch;
+using KernelOS.Infrastructure.SemanticSearch;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -64,6 +66,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISearchEngine, MemorySearchEngine>();
         services.AddOptions<VectorIndexOptions>().Bind(configuration.GetSection(VectorIndexOptions.SectionName)).Validate(o => o.MaxRecords > 0 && o.MaxQueryResults > 0 && o.MaxMetadataEntries > 0, "VectorIndex options are invalid.").ValidateOnStart();
         services.AddSingleton<IVectorIndex, InMemoryVectorIndex>();
+        services.AddOptions<SemanticSearchOptions>().Bind(configuration.GetSection(SemanticSearchOptions.SectionName)).Validate(o => o.MaxCandidates > 0 && o.DefaultTopK > 0 && o.MaxTopK >= o.DefaultTopK && o.CandidatePageSize > 0, "SemanticSearch options are invalid.").ValidateOnStart();
+        services.AddSingleton<ISemanticSearchEngine, SemanticSearchEngine>();
         services.AddOptions<EmbeddingOptions>().Bind(configuration.GetSection(EmbeddingOptions.SectionName)).Validate(o => o.MaxInputCharacters > 0 && o.MaxBatchSize > 0 && o.ExpectedDimensions > 0 && o.TimeoutSeconds > 0 && (!string.Equals(o.Provider, "ollama", StringComparison.OrdinalIgnoreCase) || (Uri.TryCreate(o.BaseUrl, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) && !string.IsNullOrWhiteSpace(o.Model))) && (string.IsNullOrWhiteSpace(o.Provider) || string.Equals(o.Provider, "none", StringComparison.OrdinalIgnoreCase) || string.Equals(o.Provider, "ollama", StringComparison.OrdinalIgnoreCase)), "Embeddings options are invalid.").ValidateOnStart();
         var embeddingProvider = configuration.GetSection(EmbeddingOptions.SectionName).GetValue<string>(nameof(EmbeddingOptions.Provider));
         if (string.Equals(embeddingProvider, "ollama", StringComparison.OrdinalIgnoreCase))

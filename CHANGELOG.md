@@ -4,6 +4,7 @@
 
 ### Added
 
+- Semantic Search Core con cosine similarity sobre Vector Index.
 - Vector Index Core In-Memory: contratos, snapshots, filtros administrativos y coexistencia de familias de embeddings.
 - OllamaEmbeddingGenerator local mediante `/api/embed`, batch nativo, validación dimensional y configuración condicional por proveedor.
 - Embeddings Core: contratos independientes de proveedor, normalización, hashes, compatibilidad de vectores y fake determinista solo para pruebas.

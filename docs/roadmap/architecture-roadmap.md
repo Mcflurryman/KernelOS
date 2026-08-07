@@ -35,7 +35,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Search Engine Core léxico determinista: ✅
 - Embeddings Core y Ollama Embeddings Provider local: ✅
 - Vector Index: ✅
-- Semantic Search: ⬜ (depende de Vector Index)
+- Semantic Search: ✅
 - Hybrid Search: ⬜ (depende de Search léxico y Semantic Search)
 
 ## Fase 5 — Context & Intelligence

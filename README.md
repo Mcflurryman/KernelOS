@@ -63,3 +63,7 @@ Knowledge Core transforma internamente `RawDocument` en items estructurados de t
 ## Memory Core
 
 Memory Core In-Memory almacena snapshots versionados de Knowledge internamente y ofrece consultas exactas deterministas. No expone endpoint ni herramienta. Persistencia, SQLite, embeddings, búsqueda semántica y RAG no están implementados.
+
+## Search Engine Core
+
+Search Engine Core ofrece búsqueda léxica interna, determinista y explicable sobre Memory: exacta, por tokens y prefijos con filtros seguros. No expone endpoint ni herramienta. Embeddings, vector DB, búsqueda semántica y RAG no están implementados.

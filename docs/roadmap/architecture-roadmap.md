@@ -40,9 +40,10 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 
 ## Fase 5 — Context & Intelligence
 
-**Objetivo:** construir contexto seguro para un Kai Agent. **Dependencia:** Retrieval estable y políticas de acceso. **Estado:** ⚪
+**Objetivo:** construir contexto seguro para un Kai Agent. **Dependencia:** Retrieval estable y políticas de acceso. **Estado:** 🟡
 
-- Context Builder, RAG y citas/procedencia: ⬜
+- Context Builder y citas/procedencia: ✅
+- RAG: ⬜
 - Kai Agent, contexto conversacional y política de memoria a largo plazo: ⚪
 - Orquestación y razonamiento más allá del Planner determinista: ⚪
 

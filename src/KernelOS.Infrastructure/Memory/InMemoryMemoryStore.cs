@@ -88,6 +88,7 @@ public sealed class InMemoryMemoryStore : IMemoryStore, IDisposable
     private static bool Matches(MemoryDocument document, MemoryQuery query) =>
         (query.Id is null || string.Equals(document.Id.ToString(), query.Id, StringComparison.OrdinalIgnoreCase))
         && (!query.KnowledgeDocumentId.HasValue || document.KnowledgeDocumentId == query.KnowledgeDocumentId)
+        && (!query.MemoryItemId.HasValue || document.Items.Any(item => item.Id == query.MemoryItemId))
         && (query.ContentHash is null || document.ContentHash == query.ContentHash || document.Items.Any(item => item.ContentHash == query.ContentHash))
         && (query.ItemType is null || document.Items.Any(item => item.Type == query.ItemType))
         && (query.ExactContent is null || document.Items.Any(item => item.Content == query.ExactContent))

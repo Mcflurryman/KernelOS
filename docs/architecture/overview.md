@@ -17,10 +17,11 @@ Embeddings Core → Ollama Embeddings Provider → Vector Index Core → Semanti
 Memory Core → Lexical Search ────────────────────────────────────────────────┐
 Embedding query → IEmbeddingGenerator → Semantic Search ──────────────────────┼→ Hybrid Search
                                                                                ┘
+Hybrid Search references → Context Builder → ContextPack (future RAG)
 ```
 
-Chat, Tool System, Planner determinista de una tarea, Filesystem Read Only, Document Readers para TXT/Markdown/JSON/CSV, Knowledge Core, Memory Core In-Memory, Search Engine Core léxico, Embeddings Core/Ollama Embeddings Provider, Vector Index Core In-Memory, Semantic Search y Hybrid Search están implementados. Retrieval es interno: no tiene endpoint ni Tool pública.
+Chat, Tool System, Planner determinista de una tarea, Filesystem Read Only, Document Readers para TXT/Markdown/JSON/CSV, Knowledge Core, Memory Core In-Memory, Search Engine Core léxico, Embeddings Core/Ollama Embeddings Provider, Vector Index Core In-Memory, Semantic Search, Hybrid Search y Context Builder están implementados. Retrieval y Context Builder son internos: no tienen endpoint ni Tool pública.
 
 Filesystem no accede a rutas no autorizadas. Document Readers reciben referencias autorizadas y el contenido documental es no confiable. Ollama es local en la configuración actual; chat y embeddings usan clientes y modelos separados.
 
-Las siguientes capas no existen todavía y no deben inferirse del diagrama: Context Builder, RAG, Kai Agent, Scheduler, Windows Automation, MCP, integraciones de correo/calendario, OCR, Vision, voz y UI. El orden de evolución está en el [Architecture Roadmap](../roadmap/architecture-roadmap.md).
+Las siguientes capas no existen todavía y no deben inferirse del diagrama: RAG, Kai Agent, Scheduler, Windows Automation, MCP, integraciones de correo/calendario, OCR, Vision, voz y UI. El orden de evolución está en el [Architecture Roadmap](../roadmap/architecture-roadmap.md).

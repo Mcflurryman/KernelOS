@@ -7,7 +7,8 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Leer documentos TXT, Markdown, JSON y CSV dentro de raíces autorizadas: ✅
 - Transformar documentos leídos en Knowledge y conservarlo en memoria de proceso: ✅ (interno; sin endpoint de Knowledge/Memory)
 - Buscar conocimiento por coincidencia exacta, tokens y prefijos: ✅ (interno; no es búsqueda semántica)
-- Buscar documentos por significado y combinar resultados: ✅ (interno; sin endpoint, Tool ni Context Builder)
+- Buscar documentos por significado y combinar resultados: ✅ (interno; sin endpoint, Tool ni RAG)
+- Preparar contexto y citas seguras desde resultados recuperados: ✅ (interno; sin RAG ni Chat)
 - Recordar conocimiento tras reiniciar: ⬜
 
 ## Assistant

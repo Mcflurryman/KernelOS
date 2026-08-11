@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Kai Planner Orchestration v1 y endpoint `POST /kai` para planificación explícita y ejecución segura.
+- Architecture / Composition Cleanup: endpoint mappings y registros de Infrastructure modularizados, pruebas de Planner separadas por responsabilidad y ningún cambio funcional.
 
 ## [Unreleased]
 

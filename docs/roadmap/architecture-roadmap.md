@@ -1,6 +1,6 @@
 # Architecture Roadmap
 
-> Kai Planner Orchestration v1: código implementado; validación final pendiente mientras NuGet/TLS externo impida restaurar dependencias.
+> Kai Planner Orchestration v1 y Architecture / Composition Cleanup: implementados y validados localmente.
 
 Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado / reservado.
 
@@ -10,6 +10,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 
 - Workflow de ramas, CI, validación local, estándares y ADRs: ✅
 - Configuración mediante Options y línea base de pruebas: ✅
+- Architecture / Composition Cleanup: ✅
 
 ## Fase 2 — Runtime Foundation
 
@@ -57,7 +58,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 
 - Tool Confirmation & Execution Policy: ✅
 - Execution Approval / Confirmation Surface: ✅
-- Kai Planner Orchestration: ⚪ (siguiente milestone)
+- Kai Planner Orchestration: ✅
 - Task Executor, Scheduler, trabajos en segundo plano y notificaciones: ⚪
 - Políticas de permisos y confirmaciones para acciones sensibles: ⚪
 

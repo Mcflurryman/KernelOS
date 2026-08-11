@@ -58,6 +58,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 
 - Tool Confirmation & Execution Policy: ✅
 - Execution Approval / Confirmation Surface: ✅
+- Multi-task Authorization Preflight: ✅
 - Kai Planner Orchestration: ✅
 - Task Executor, Scheduler, trabajos en segundo plano y notificaciones: ⚪
 - Políticas de permisos y confirmaciones para acciones sensibles: ⚪

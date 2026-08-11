@@ -6,7 +6,7 @@ namespace KernelOS.Infrastructure.Execution;
 
 public sealed class ExecutionGate(IExecutionPolicy policy, IExecutionApprovalStore approvals, IToolRegistry tools) : IExecutionGate
 {
-    public async Task<ExecutionGateResult> EvaluateAsync(Guid planId, PlanTask task, Guid? approvalId, CancellationToken cancellationToken = default)
+    public async Task<ExecutionGateResult> EvaluateAsync(Guid planId, PlanTask task, Guid? approvalId, bool consumeApproval = true, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var metadata = tools.GetByName(task.ToolName)?.ExecutionMetadata;
@@ -32,7 +32,10 @@ public sealed class ExecutionGate(IExecutionPolicy policy, IExecutionApprovalSto
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        var consumed = await approvals.TryConsumeAsync(approvalId.Value, planId, task.Id, ExecutionTaskFingerprint.Create(task), cancellationToken);
+        var fingerprint = ExecutionTaskFingerprint.Create(task);
+        var consumed = consumeApproval
+            ? await approvals.TryConsumeAsync(approvalId.Value, planId, task.Id, fingerprint, cancellationToken)
+            : await approvals.IsAvailableAsync(approvalId.Value, planId, task.Id, fingerprint, cancellationToken);
         return consumed
             ? new(ExecutionGateStatus.Authorized, decision, approvalId)
             : new(ExecutionGateStatus.RequiresConfirmation, decision);

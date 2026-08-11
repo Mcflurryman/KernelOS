@@ -22,6 +22,7 @@ internal static class ExecutionInfrastructureServiceCollectionExtensions
         services.AddSingleton<IExecutionPendingStore, InMemoryExecutionPendingStore>();
         services.AddSingleton<IExecutionConfirmationService, ExecutionConfirmationService>();
         services.AddSingleton<IExecutionGate, ExecutionGate>();
+        services.AddSingleton<IExecutionPreflight, ExecutionPreflight>();
 
         return services;
     }

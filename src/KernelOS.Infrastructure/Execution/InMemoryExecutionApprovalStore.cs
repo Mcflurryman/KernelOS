@@ -48,6 +48,17 @@ public sealed class InMemoryExecutionApprovalStore(IOptions<ExecutionPolicyOptio
         return Task.FromResult(approvals.TryRemove(approvalId, out _));
     }
 
+    public Task<bool> IsAvailableAsync(Guid approvalId, Guid planId, Guid taskId, string taskFingerprint, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var available = approvals.TryGetValue(approvalId, out var approval)
+            && approval.PlanId == planId
+            && approval.TaskId == taskId
+            && string.Equals(approval.TaskFingerprint, taskFingerprint, StringComparison.Ordinal)
+            && approval.ExpiresAt > timeProvider.GetUtcNow();
+        return Task.FromResult(available);
+    }
+
     private void RemoveExpiredApprovals(DateTimeOffset now)
     {
         foreach (var approval in approvals)

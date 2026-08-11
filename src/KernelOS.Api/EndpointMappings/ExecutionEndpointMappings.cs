@@ -48,14 +48,14 @@ public static class ExecutionEndpointMappings
                 return Results.Conflict(new { error = "The pending execution is not approved or is no longer available." });
             }
 
-            if (pending.ApprovalId is null)
+            if (pending.ApprovalId is null && (pending.ApprovalIds is null || pending.ApprovalIds.Count == 0))
             {
                 return Results.Conflict(new { error = "The pending execution has no approval." });
             }
 
             var result = await executor.ExecuteAsync(
                 pending.Plan,
-                new Dictionary<Guid, Guid> { [pending.TaskId] = pending.ApprovalId.Value },
+                pending.ApprovalIds ?? new Dictionary<Guid, Guid> { [pending.TaskId] = pending.ApprovalId!.Value },
                 cancellationToken);
             return result.Status switch
             {

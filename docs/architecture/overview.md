@@ -1,5 +1,7 @@
 # Arquitectura actual
 
+Kai Planner Orchestration v1 conecta Kai con Planner y executor mediante contratos de alto nivel; las Tools y approvals permanecen fuera de Kai.
+
 KernelOS es un monolito modular .NET 8. `KernelOS.Core` contiene contratos; `KernelOS.Infrastructure` implementa proveedores y almacenamiento local; `KernelOS.Tools` delimita acciones; `KernelOS.Api` expone HTTP; `KernelOS.Tests` prueba contratos y límites.
 
 ```text

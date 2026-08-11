@@ -1,5 +1,7 @@
 # Architecture Roadmap
 
+> Kai Planner Orchestration v1: código implementado; validación final pendiente mientras NuGet/TLS externo impida restaurar dependencias.
+
 Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado / reservado.
 
 ## Fase 1 — Engineering Foundation

@@ -1,5 +1,7 @@
 # KernelOS
 
+Kai Planner Orchestration v1 permite `POST /kai` con una Tool explícita: las acciones read-only autorizadas se ejecutan bajo policy; los side effects devuelven `RequiresConfirmation` y un pending externo. Kai no autoaprueba ni ejecuta fuera del executor.
+
 KernelOS es una plataforma personal de IA local. Kai es el asistente previsto sobre esa plataforma. El proyecto es un monolito modular .NET 8: Core define contratos; Infrastructure integra proveedores locales; Tools controla acciones; Api expone HTTP.
 
 ## Estado actual

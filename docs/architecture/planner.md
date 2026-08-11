@@ -1,5 +1,7 @@
 # Planner
 
+`POST /kai` puede iniciar el flujo Planner con una Tool explícita; sigue pasando por Plan, policy, gate y executor.
+
 > Estado: planificación y ejecución están separadas. `IPlanner` es una fachada de planificación pura sobre `IPlanBuilder`; `IPlanExecutor` es la única capa del Planner que invoca `IToolRouter`.
 
 `IPlanBuilder.BuildAsync` valida un `Goal` explícito y construye un `Plan` determinista, con identificadores, argumentos preservados y estado `Planned`. No depende del router, de Tools concretas ni de infraestructura de entrada/salida, por lo que construir un plan no produce efectos laterales.

@@ -1,5 +1,7 @@
 # Execution Approval Surface
 
+Kai puede propagar `PendingExecutionId` y la confirmation pública, pero no puede aprobar ni ejecutar el pending aprobado.
+
 La confirmación humana es una operación independiente de ejecutar una Tool.
 
 ```text

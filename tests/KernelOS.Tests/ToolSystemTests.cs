@@ -131,6 +131,7 @@ public sealed class ToolExecutionTests
     }
 }
 
+[Collection("Side effect tool tests")]
 public sealed class ToolEndpointTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {

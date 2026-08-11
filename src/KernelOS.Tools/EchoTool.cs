@@ -1,5 +1,6 @@
 using System.Text.Json;
 using KernelOS.Core;
+using KernelOS.Core.Execution;
 
 namespace KernelOS.Tools;
 
@@ -20,6 +21,8 @@ public sealed class EchoTool : IKernelTool
     public IReadOnlyCollection<ToolCapability> Capabilities => ToolCapabilities;
 
     public IReadOnlyCollection<ToolParameter> Parameters => ToolParameters;
+
+    public ToolExecutionMetadata ExecutionMetadata => new(true, false, false, ExecutionRiskLevel.Low);
 
     public Task<ToolExecutionResult> ExecuteAsync(ToolExecutionRequest request, CancellationToken cancellationToken = default)
     {

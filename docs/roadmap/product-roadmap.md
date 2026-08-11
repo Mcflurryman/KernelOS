@@ -17,6 +17,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 
 - Conversar localmente con Ollama: ✅
 - Construir un plan explícito sin ejecutarlo y ejecutar un plan validado mediante una Tool registrada: ✅
+- Exigir confirmación one-shot para Tools declaradas con efectos laterales: ✅ (Core; sin UI de confirmación)
 - Kai Agent Core v1 para Chat/RAG; modo Planner todavía no disponible: ✅
 - Usar contexto recuperado, recordar conversaciones y responder con fuentes: ⬜
 - Recordar conversaciones entre sesiones o que Kai recuerde todo lo hablado: ⬜

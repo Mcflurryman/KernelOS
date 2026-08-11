@@ -24,6 +24,8 @@ using KernelOS.Infrastructure.Rag;
 using KernelOS.Core.Conversation;
 using KernelOS.Infrastructure.Conversation;
 using KernelOS.Core.Kai; using KernelOS.Infrastructure.Kai;
+using KernelOS.Core.Execution;
+using KernelOS.Infrastructure.Execution;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -55,6 +57,11 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IChatModel, OllamaChatModel>();
         services.AddSingleton<IOllamaHealthCheck, OllamaHealthCheck>();
+        services.AddOptions<ExecutionPolicyOptions>().Bind(configuration.GetSection(ExecutionPolicyOptions.SectionName)).Validate(options => options.ApprovalTtlMinutes > 0, "ExecutionPolicy:ApprovalTtlMinutes must be greater than zero.").ValidateOnStart();
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IExecutionPolicy, DefaultExecutionPolicy>();
+        services.AddSingleton<IExecutionApprovalStore, InMemoryExecutionApprovalStore>();
+        services.AddSingleton<IExecutionGate, ExecutionGate>();
         services.AddSingleton<IPlanBuilder, PlanBuilder>();
         services.AddSingleton<IPlanExecutor, PlanExecutor>();
         services.AddSingleton<IPlanner, KernelPlanner>();

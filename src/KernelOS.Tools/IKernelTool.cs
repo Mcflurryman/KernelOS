@@ -1,4 +1,5 @@
 using KernelOS.Core;
+using KernelOS.Core.Execution;
 
 namespace KernelOS.Tools;
 
@@ -13,6 +14,8 @@ public interface IKernelTool
     IReadOnlyCollection<ToolCapability> Capabilities { get; }
 
     IReadOnlyCollection<ToolParameter> Parameters { get; }
+
+    ToolExecutionMetadata ExecutionMetadata => ToolExecutionMetadata.Unknown;
 
     Task<ToolExecutionResult> ExecuteAsync(
         ToolExecutionRequest request,

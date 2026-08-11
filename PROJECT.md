@@ -21,6 +21,6 @@ La plataforma separa contratos independientes en Core, implementaciones y provee
 
 ## Objetivos y no objetivos actuales
 
-El objetivo presente incluye RAG Pipeline interno, Conversation Context por request y Kai Agent Core v1 conservador. El historial reciente lo proporciona el caller; el mensaje actual permanece separado. El Planner ya separa construir un plan de ejecutarlo, pero Kai no puede usarlo hasta disponer de confirmación y política de ejecución. Conversation Memory entre sesiones, automatización general, proveedores cloud, UI, voz, visión y persistencia de memoria siguen fuera del alcance actual.
+El objetivo presente incluye RAG Pipeline interno, Conversation Context por request y Kai Agent Core v1 conservador. El historial reciente lo proporciona el caller; el mensaje actual permanece separado. El Planner separa construir, autorizar y ejecutar: las aprobaciones son acotadas y de un solo uso. Kai no puede usarlo aún porque falta su orquestación específica. Conversation Memory entre sesiones, automatización general, proveedores cloud, UI, voz, visión y persistencia de memoria siguen fuera del alcance actual.
 
 La evolución futura y sus dependencias se mantienen en el [Roadmap](docs/roadmap/roadmap.md), no en este documento.

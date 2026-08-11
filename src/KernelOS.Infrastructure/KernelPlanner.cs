@@ -1,5 +1,6 @@
 using System.Text.Json;
 using KernelOS.Core;
+using KernelOS.Core.Execution;
 using KernelOS.Core.Planning;
 using KernelOS.Tools;
 
@@ -69,9 +70,9 @@ public sealed class PlanBuilder : IPlanBuilder
     }
 }
 
-public sealed class PlanExecutor(IToolRouter toolRouter) : IPlanExecutor
+public sealed class PlanExecutor(IExecutionGate executionGate, IToolRouter toolRouter) : IPlanExecutor
 {
-    public async Task<PlannerResult> ExecuteAsync(Plan plan, CancellationToken cancellationToken = default)
+    public async Task<PlannerResult> ExecuteAsync(Plan plan, IReadOnlyDictionary<Guid, Guid>? approvalIds = null, CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
         {
@@ -84,9 +85,10 @@ public sealed class PlanExecutor(IToolRouter toolRouter) : IPlanExecutor
         }
 
         var startedAt = DateTimeOffset.UtcNow;
-        var tasks = new List<PlanTask>();
-        foreach (var task in plan.Tasks)
+        var tasks = plan.Tasks.ToList();
+        for (var taskIndex = 0; taskIndex < tasks.Count; taskIndex++)
         {
+            var task = tasks[taskIndex];
             if (cancellationToken.IsCancellationRequested)
             {
                 return new(PlannerStatus.Cancelled, Cancel(plan, tasks, startedAt));
@@ -94,9 +96,19 @@ public sealed class PlanExecutor(IToolRouter toolRouter) : IPlanExecutor
 
             try
             {
+                var approvalId = approvalIds is not null && approvalIds.TryGetValue(task.Id, out var value) ? value : (Guid?)null;
+                var gate = await executionGate.EvaluateAsync(plan.Id, task, approvalId, cancellationToken);
+                if (gate.Status != ExecutionGateStatus.Authorized)
+                {
+                    var gatePlannerStatus = gate.Status == ExecutionGateStatus.RequiresConfirmation ? PlannerStatus.RequiresConfirmation : PlannerStatus.Denied;
+                    var errorCode = gate.Status == ExecutionGateStatus.RequiresConfirmation ? "confirmation_required" : "execution_denied";
+                    tasks[taskIndex] = task with { Status = gatePlannerStatus };
+                    return new(gatePlannerStatus, plan with { Tasks = tasks, Status = gatePlannerStatus, StartedAt = startedAt, FinishedAt = DateTimeOffset.UtcNow }, new(errorCode, gate.Decision.Reason.ToString()));
+                }
+
                 var result = await toolRouter.ExecuteAsync(new ToolExecutionRequest(task.ToolName, task.Arguments), cancellationToken);
                 var status = result.Status == ToolExecutionStatus.Success ? PlannerStatus.Completed : result.Status == ToolExecutionStatus.Cancelled ? PlannerStatus.Cancelled : PlannerStatus.Failed;
-                tasks.Add(task with { Status = status, Result = result });
+                tasks[taskIndex] = task with { Status = status, Result = result };
                 if (status != PlannerStatus.Completed)
                 {
                     return new(status, plan with { Tasks = tasks, Status = status, StartedAt = startedAt, FinishedAt = DateTimeOffset.UtcNow }, status == PlannerStatus.Failed ? new("tool_failed", "The planned task did not complete.") : null);
@@ -132,10 +144,10 @@ public sealed class PlanExecutor(IToolRouter toolRouter) : IPlanExecutor
             && task.RetryCount >= 0
             && task.Result is null);
 
-    private static Plan Cancel(Plan plan, IReadOnlyCollection<PlanTask> completedTasks, DateTimeOffset? startedAt = null) =>
+    private static Plan Cancel(Plan plan, IReadOnlyCollection<PlanTask> tasks, DateTimeOffset? startedAt = null) =>
         plan with
         {
-            Tasks = completedTasks,
+            Tasks = tasks,
             Status = PlannerStatus.Cancelled,
             StartedAt = startedAt,
             FinishedAt = DateTimeOffset.UtcNow

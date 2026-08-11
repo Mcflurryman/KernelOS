@@ -51,10 +51,10 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 
 ## Fase 6 — Automation
 
-**Objetivo:** ejecutar trabajo autorizado y observable. **Dependencia:** Kai Agent, permisos y confirmaciones. **Estado:** ⚪
+**Objetivo:** ejecutar trabajo autorizado y observable. **Dependencia:** Kai Agent, permisos y confirmaciones. **Estado:** 🟡
 
-- Tool Confirmation & Execution Policy: ⚪ (siguiente milestone)
-- Kai Planner Orchestration: ⚪ (posterior a confirmación y políticas)
+- Tool Confirmation & Execution Policy: ✅
+- Kai Planner Orchestration: ⚪ (siguiente milestone)
 - Task Executor, Scheduler, trabajos en segundo plano y notificaciones: ⚪
 - Políticas de permisos y confirmaciones para acciones sensibles: ⚪
 

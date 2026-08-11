@@ -10,7 +10,7 @@ Program.cs (composition root)
      ├─ Chat → IChatModel → OllamaChatModel
      ├─ Kai → IKaiAgent → Planner / RAG / Chat según contrato
      ├─ Planner → IPlanner/IPlanBuilder → Plan (sin efectos laterales)
-     │              └─ IPlanExecutor → IExecutionGate → IToolRouter → Tools
+     │              └─ IPlanExecutor → IExecutionPreflight → IExecutionGate → IToolRouter → Tools
      └─ Tools / Filesystem / Documents → IReadOnlyToolExecutionGateway → IToolRouter
                                                           ├─ FilesystemTool → Filesystem Capability
                                                           └─ DocumentTool → Document Readers
@@ -33,7 +33,7 @@ future Kai Agent ─────────────────────
 
 Chat, Tool System, Planner determinista con construcción, autorización y ejecución separadas, Filesystem Read Only, Document Readers para TXT/Markdown/JSON/CSV, Knowledge Core, Memory Core In-Memory, retrieval, Context Builder, RAG Pipeline, Conversation Context y Kai Agent Core v1 están implementados. Kai puede orquestar Planner mediante contratos de alto nivel, sin acceder a Tools ni `IToolRouter`; la policy exige confirmación para efectos laterales y falla cerrada ante metadata desconocida. Knowledge, retrieval, Context Builder y RAG son internos: no tienen endpoint ni Tool pública.
 
-La Execution Approval Surface conserva un pending snapshot opaco, permite la confirmación explícita externa y ejecuta después mediante el executor; no conecta Kai al Planner.
+La Execution Approval Surface conserva un pending snapshot opaco del plan completo, permite la confirmación explícita externa y ejecuta después mediante el executor. El preflight agrega todas las decisiones antes de cualquier Tool y no conecta Kai al Planner.
 
 Filesystem no accede a rutas no autorizadas. Document Readers reciben referencias autorizadas y el contenido documental es no confiable. Ollama es local en la configuración actual; chat y embeddings usan clientes y modelos separados.
 

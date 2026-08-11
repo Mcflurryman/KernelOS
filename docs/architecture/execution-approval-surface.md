@@ -11,8 +11,8 @@ POST /execution/confirmations/{id} -> Approve | Reject
 POST /execution/pending/{id}/execute -> IPlanExecutor -> Gate -> ToolRouter
 ```
 
-`PendingExecutionId` es opaco y el servidor conserva un snapshot inmutable del Plan; el cliente nunca reenvía Tool, argumentos, riesgo, fingerprint, TTL ni approval. La solicitud pública muestra nombre, descripción, riesgo, razón de policy y un resumen conservador que no incluye argumentos.
+`PendingExecutionId` es opaco y el servidor conserva un snapshot inmutable del Plan completo; el cliente nunca reenvía Tool, argumentos, riesgo, fingerprint, TTL ni approval. La solicitud pública muestra nombre, descripción, riesgo, razón de policy y un resumen conservador que no incluye argumentos.
 
-Approve crea una approval one-shot por medio de `IExecutionApprovalStore`, con fingerprint calculado desde el snapshot. Reject no crea approval. Aprobar no ejecuta. El pending y la approval usan el TTL de `ExecutionPolicy`; el store limpia entradas expiradas perezosamente y solo una operación concurrente puede aprobar o tomar un pending aprobado para ejecución.
+Approve crea una approval one-shot por cada tarea que la requiere, con fingerprint calculado desde el snapshot y scope de plan y tarea. Reject no crea approvals. Aprobar no ejecuta. El pending y las approvals usan el TTL de `ExecutionPolicy`; el store limpia entradas expiradas perezosamente y solo una operación concurrente puede aprobar o tomar un pending aprobado para ejecución.
 
-V1 conserva el Planner HTTP de una tarea y el servicio rechaza explícitamente planes multi-tarea. No implementa reanudación de planes parcialmente ejecutados ni una UI; las capacidades multi-tarea requerirán preflight de autorización antes de exponerlas mediante esta superficie. Kai no accede a estos contratos.
+El Planner HTTP sigue construyendo una tarea por request; no afirma crear planes multi-task desde lenguaje natural. La superficie conserva y aprueba snapshots multi-task ya construidos. No implementa reanudación de planes parcialmente ejecutados, persistencia ni una UI. Kai no accede a estos contratos.

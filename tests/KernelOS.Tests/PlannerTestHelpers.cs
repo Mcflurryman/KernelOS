@@ -63,12 +63,27 @@ internal sealed class FakeRouter : IToolRouter
     }
 }
 
+internal sealed class CancellingRouter(CancellationTokenSource cancellation) : IToolRouter
+{
+    internal int Calls { get; private set; }
+
+    public Task<ToolExecutionResult> ExecuteAsync(
+        ToolExecutionRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        Calls++;
+        cancellation.Cancel();
+        return Task.FromResult(ToolExecutionResult.Success("ok"));
+    }
+}
+
 internal sealed class AllowingGate : IExecutionGate
 {
     public Task<ExecutionGateResult> EvaluateAsync(
         Guid planId,
         PlanTask task,
         Guid? approvalId,
+        bool consumeApproval = true,
         CancellationToken cancellationToken = default) =>
         Task.FromResult(new ExecutionGateResult(
             ExecutionGateStatus.Authorized,
@@ -84,6 +99,7 @@ internal sealed class BlockingGate(ExecutionGateStatus status) : IExecutionGate
         Guid planId,
         PlanTask task,
         Guid? approvalId,
+        bool consumeApproval = true,
         CancellationToken cancellationToken = default) =>
         Task.FromResult(new ExecutionGateResult(
             status,

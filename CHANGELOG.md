@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Multi-task Authorization Preflight: autorización global previa a cualquier Tool, pending único con snapshot completo y approvals one-shot scoped por tarea.
+- ADR 0028 y documentación de seguridad, concurrencia, TTL y límites de ejecución multi-task.
 - Kai Planner Orchestration v1 y endpoint `POST /kai` para planificación explícita y ejecución segura.
 - Architecture / Composition Cleanup: endpoint mappings y registros de Infrastructure modularizados, pruebas de Planner separadas por responsabilidad y ningún cambio funcional.
 

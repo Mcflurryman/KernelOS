@@ -17,18 +17,51 @@ public sealed class ExecutionConfirmationService(
     public async Task<ExecutionConfirmationResult> CreatePendingAsync(Plan plan, Guid taskId, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var task = plan?.Tasks.SingleOrDefault(item => item.Id == taskId);
-        if (plan is null || plan.Id == Guid.Empty || plan.Tasks.Count != 1 || task is null || task.Status != PlannerStatus.Planned) return new(PendingExecutionStatus.NotConfirmable);
+        if (plan is null
+            || plan.Id == Guid.Empty
+            || plan.Tasks.Count == 0
+            || plan.Tasks.Any(task => task.Status != PlannerStatus.Planned))
+        {
+            return new(PendingExecutionStatus.NotConfirmable);
+        }
 
-        var tool = tools.GetByName(task.ToolName);
-        var decision = policy.Evaluate(new ExecutionPolicyRequest(plan.Id, task.Id, task.ToolName, tool?.ExecutionMetadata));
-        if (decision.Type != ExecutionPolicyDecisionType.RequireConfirmation || decision.Reason == ExecutionPolicyReason.UnknownToolRequiresConfirmation) return new(PendingExecutionStatus.NotConfirmable);
+        var evaluations = plan.Tasks.Select(task =>
+        {
+            var tool = tools.GetByName(task.ToolName);
+            var decision = policy.Evaluate(new ExecutionPolicyRequest(
+                plan.Id,
+                task.Id,
+                task.ToolName,
+                tool?.ExecutionMetadata));
+            return new { Task = task, Tool = tool, Decision = decision };
+        }).ToArray();
+
+        if (evaluations.Any(item =>
+                item.Decision.Type == ExecutionPolicyDecisionType.Deny
+                || item.Decision.Reason == ExecutionPolicyReason.UnknownToolRequiresConfirmation))
+        {
+            return new(PendingExecutionStatus.NotConfirmable);
+        }
+        var confirmable = evaluations.Where(item => item.Decision.Type == ExecutionPolicyDecisionType.RequireConfirmation).ToArray();
+        if (confirmable.Length == 0) return new(PendingExecutionStatus.NotConfirmable);
+        var representative = confirmable[0];
 
         var id = Guid.NewGuid();
         var expiresAt = timeProvider.GetUtcNow().Add(ttl);
-        var request = new ExecutionConfirmationRequest(id, plan.Id, task.Id, task.ToolName, tool?.Description ?? "", decision.RiskLevel, decision.Reason, "Arguments are not displayed by default.", expiresAt);
+        var risk = evaluations.Max(item => item.Decision.RiskLevel);
+        var request = new ExecutionConfirmationRequest(
+            id,
+            plan.Id,
+            representative.Task.Id,
+            representative.Task.ToolName,
+            representative.Tool?.Description ?? "Multiple planned actions require confirmation.",
+            risk,
+            representative.Decision.Reason,
+            "Arguments are not displayed by default.",
+            expiresAt,
+            plan.Tasks.Count);
         var snapshot = Snapshot(plan);
-        await pendingStore.CreateAsync(new PendingExecution(id, snapshot, task.Id, request, expiresAt, PendingExecutionStatus.PendingConfirmation), cancellationToken);
+        await pendingStore.CreateAsync(new PendingExecution(id, snapshot, representative.Task.Id, request, expiresAt, PendingExecutionStatus.PendingConfirmation), cancellationToken);
         return new(PendingExecutionStatus.PendingConfirmation, request);
     }
 
@@ -51,16 +84,43 @@ public sealed class ExecutionConfirmationService(
         }
 
         var approving = pending with { Status = PendingExecutionStatus.Executing };
-        if (!await pendingStore.TryTransitionAsync(pending.Id, PendingExecutionStatus.PendingConfirmation, approving, cancellationToken)) return await GetAsync(pendingExecutionId, cancellationToken);
-        var task = pending.Plan.Tasks.Single(item => item.Id == pending.TaskId);
-        var approval = await approvals.CreateAsync(pending.Plan.Id, task.Id, ExecutionTaskFingerprint.Create(task), cancellationToken);
-        var approved = pending with { Status = PendingExecutionStatus.Approved, ApprovalId = approval.Id };
+        if (!await pendingStore.TryTransitionAsync(
+                pending.Id,
+                PendingExecutionStatus.PendingConfirmation,
+                approving,
+                cancellationToken))
+        {
+            return await GetAsync(pendingExecutionId, cancellationToken);
+        }
+        var approvalIds = new Dictionary<Guid, Guid>();
+        foreach (var task in pending.Plan.Tasks)
+        {
+            var tool = tools.GetByName(task.ToolName);
+            var policyDecision = policy.Evaluate(new ExecutionPolicyRequest(pending.Plan.Id, task.Id, task.ToolName, tool?.ExecutionMetadata));
+            if (policyDecision.Type == ExecutionPolicyDecisionType.RequireConfirmation)
+            {
+                var approval = await approvals.CreateAsync(pending.Plan.Id, task.Id, ExecutionTaskFingerprint.Create(task), cancellationToken);
+                approvalIds[task.Id] = approval.Id;
+            }
+        }
+        var approved = pending with
+        {
+            Status = PendingExecutionStatus.Approved,
+            ApprovalId = approvalIds.TryGetValue(pending.TaskId, out var approvalId) ? approvalId : null,
+            ApprovalIds = approvalIds
+        };
         await pendingStore.TryTransitionAsync(pending.Id, PendingExecutionStatus.Executing, approved, cancellationToken);
-        return new(PendingExecutionStatus.Approved, pending.Confirmation, approval.Id);
+        return new(PendingExecutionStatus.Approved, pending.Confirmation, approved.ApprovalId);
     }
 
     public Task<PendingExecution?> TryTakeApprovedExecutionAsync(Guid pendingExecutionId, CancellationToken cancellationToken = default) =>
         pendingStore.TryTakeApprovedAsync(pendingExecutionId, cancellationToken);
 
-    private static Plan Snapshot(Plan plan) => plan with { Tasks = plan.Tasks.Select(task => task with { Arguments = task.Arguments.ToDictionary(item => item.Key, item => item.Value.Clone()) }).ToArray() };
+    private static Plan Snapshot(Plan plan) => plan with
+    {
+        Tasks = plan.Tasks.Select(task => task with
+        {
+            Arguments = task.Arguments.ToDictionary(item => item.Key, item => item.Value.Clone())
+        }).ToArray()
+    };
 }

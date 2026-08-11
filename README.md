@@ -1,6 +1,6 @@
 # KernelOS
 
-Kai Planner Orchestration v1 permite `POST /kai` con una Tool explícita: las acciones read-only autorizadas se ejecutan bajo policy; los side effects devuelven `RequiresConfirmation` y un pending externo. Kai no autoaprueba ni ejecuta fuera del executor. La API y la composición de Infrastructure están organizadas por módulos, sin cambios funcionales.
+Kai Planner Orchestration v1 permite `POST /kai` con una Tool explícita: las acciones read-only autorizadas se ejecutan bajo policy; los side effects devuelven `RequiresConfirmation` y un pending externo. Los planes multi-task completan preflight de autorización antes de cualquier Tool. Kai no autoaprueba ni ejecuta fuera del executor.
 
 KernelOS es una plataforma personal de IA local. Kai es el asistente previsto sobre esa plataforma. El proyecto es un monolito modular .NET 8: Core define contratos; Infrastructure integra proveedores locales; Tools controla acciones; Api expone HTTP.
 
@@ -8,7 +8,7 @@ KernelOS es una plataforma personal de IA local. Kai es el asistente previsto so
 
 Están implementados chat local mediante Ollama, Tool System, Planner determinista con planificación, autorización y ejecución separadas, Filesystem Capability Read Only, Document Readers (TXT, Markdown, JSON y CSV), Knowledge Core, Memory Core In-Memory, retrieval interno, Context Builder, RAG Pipeline, Conversation Context Core y Kai Agent Core v1. Conversation Context recibe historial reciente del caller, selecciona por presupuesto y mantiene separado el mensaje actual.
 
-Siguen pendientes la persistencia de conversaciones entre sesiones y experiencia pública de preguntas sobre documentos. La construcción de un plan no ejecuta Tools; las acciones con efectos laterales requieren una aprobación de un solo uso, ligada a la tarea y con caducidad, creada mediante una confirmación API explícita. Conversation Context no es una memoria conversacional persistente. Tampoco existen Scheduler, automatización de Windows, MCP, integraciones de correo/calendario, OCR, voz o UI.
+Siguen pendientes la persistencia de conversaciones entre sesiones y experiencia pública de preguntas sobre documentos. La construcción de un plan no ejecuta Tools; las acciones con efectos laterales requieren aprobaciones de un solo uso, ligadas a plan, tarea y fingerprint, creadas mediante confirmación API explícita sobre un snapshot. La ejecución es secuencial y no hace rollback de efectos externos. Conversation Context no es una memoria conversacional persistente. Tampoco existen Scheduler, automatización de Windows, MCP, integraciones de correo/calendario, OCR, voz o UI.
 
 ## Requisitos y ejecución
 

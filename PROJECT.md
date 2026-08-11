@@ -1,5 +1,7 @@
 # Proyecto KernelOS
 
+Kai puede iniciar Planner para acciones explícitas bajo policy. La aprobación de side effects continúa siendo una decisión externa; no hay agent loop ni autonomía.
+
 ## Propósito
 
 KernelOS es una plataforma local-first para construir un asistente personal llamado Kai. Busca que la persona usuaria mantenga control sobre sus datos, modelos, acciones y permisos, sin acoplar las decisiones de producto a un proveedor concreto.

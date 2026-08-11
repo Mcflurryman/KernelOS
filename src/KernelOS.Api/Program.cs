@@ -1,6 +1,7 @@
 using KernelOS.Core;
 using KernelOS.Core.Planning;
 using KernelOS.Core.Execution;
+using KernelOS.Core.Kai;
 using KernelOS.Api.Contracts;
 using KernelOS.Infrastructure;
 using KernelOS.Tools;
@@ -99,6 +100,21 @@ app.MapPost("/chat", async (
         "timeout" => Results.Json(response, statusCode: StatusCodes.Status504GatewayTimeout),
         "cancelled" => Results.Json(response, statusCode: 499),
         _ => Results.Json(response, statusCode: StatusCodes.Status502BadGateway)
+    };
+});
+
+app.MapPost("/kai", async (KaiApiRequest? request, IKaiAgent kai, CancellationToken cancellationToken) =>
+{
+    if (request is null) return Results.BadRequest();
+    var result = await kai.HandleAsync(new KaiRequest(request.Message, PreferredMode: request.PreferredMode, ToolName: request.ToolName, Arguments: request.Arguments), cancellationToken);
+    return result.Status switch
+    {
+        KaiStatus.Completed or KaiStatus.Success or KaiStatus.PartialSuccess => Results.Ok(result),
+        KaiStatus.RequiresConfirmation => Results.Json(result, statusCode: StatusCodes.Status409Conflict),
+        KaiStatus.Denied => Results.Json(result, statusCode: StatusCodes.Status403Forbidden),
+        KaiStatus.Cancelled => Results.Json(result, statusCode: 499),
+        KaiStatus.InvalidRequest or KaiStatus.PlanningFailed => Results.BadRequest(result),
+        _ => Results.Json(result, statusCode: StatusCodes.Status500InternalServerError)
     };
 });
 

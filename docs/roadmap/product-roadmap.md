@@ -1,5 +1,7 @@
 # Product Roadmap
 
+> Kai puede iniciar acciones explícitas bajo policy y devolver confirmación pendiente. No hay auto-approval, agent loop, scheduler, memoria persistente, navegador, Spotify, Maps, trading ni coding agent.
+
 Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado / reservado.
 
 ## Knowledge

@@ -1,5 +1,7 @@
 # Tool Confirmation & Execution Policy
 
+Kai respeta la policy: no autoaprueba, no accede al router y detiene los side effects en `RequiresConfirmation`.
+
 La autorización es una frontera independiente entre construir un plan y ejecutar una Tool:
 
 ```text

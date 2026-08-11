@@ -54,6 +54,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 **Objetivo:** ejecutar trabajo autorizado y observable. **Dependencia:** Kai Agent, permisos y confirmaciones. **Estado:** 🟡
 
 - Tool Confirmation & Execution Policy: ✅
+- Execution Approval / Confirmation Surface: ✅
 - Kai Planner Orchestration: ⚪ (siguiente milestone)
 - Task Executor, Scheduler, trabajos en segundo plano y notificaciones: ⚪
 - Políticas de permisos y confirmaciones para acciones sensibles: ⚪

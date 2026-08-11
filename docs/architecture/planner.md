@@ -7,3 +7,5 @@
 `IPlanExecutor.ExecuteAsync` recibe un plan ya construido. Antes de ejecutar, valida por completo el plan, sus tareas, identificadores, argumentos y estado `Planned`; un plan inválido no llega al router. Para cada tarea consulta `IExecutionGate`; la ejecución v1 es secuencial y fail-fast. Los estados incluyen `RequiresConfirmation` y `Denied`, además de `Failed` y `Cancelled`.
 
 `POST /planner/execute` conserva la operación explícita existente, pero compone visiblemente `IPlanner` e `IPlanExecutor`; no oculta ejecución dentro de `IPlanner.PlanAsync`. Aún no hay endpoint separado de creación, persistencia, reanudación, replanificación, confirmación humana ni políticas de permisos.
+
+Cuando requiere confirmación, el endpoint devuelve un identificador pending opaco. La confirmación y la ejecución posterior se realizan mediante endpoints separados y el snapshot almacenado.

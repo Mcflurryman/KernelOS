@@ -4,6 +4,8 @@
 
 ### Added
 
+- Execution Approval Surface: pending executions opacos, confirmación explícita Approve/Reject y ejecución posterior de snapshots aprobados.
+
 - Tool Confirmation & Execution Policy Core: policy determinista, gate, metadata de riesgo y aprobaciones en memoria de un solo uso con expiración y huella de tarea.
 - Estados `RequiresConfirmation` y `Denied` para resultados del Planner.
 - Separación segura del Planner: `IPlanBuilder` construye planes sin efectos laterales e `IPlanExecutor` valida y ejecuta tareas secuencialmente mediante el router.

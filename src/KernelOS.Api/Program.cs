@@ -1,8 +1,10 @@
 using KernelOS.Core;
 using KernelOS.Core.Planning;
+using KernelOS.Core.Execution;
 using KernelOS.Api.Contracts;
 using KernelOS.Infrastructure;
 using KernelOS.Tools;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.Options;
 
@@ -12,6 +14,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddKernelTools();
+builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 var app = builder.Build();
 
@@ -132,7 +135,7 @@ app.MapPost("/tools/{name}", async (
     };
 });
 
-app.MapPost("/planner/execute", async (PlannerExecuteApiRequest? request, IPlanner planner, IPlanExecutor executor, CancellationToken cancellationToken) =>
+app.MapPost("/planner/execute", async (PlannerExecuteApiRequest? request, IPlanner planner, IPlanExecutor executor, IExecutionConfirmationService confirmations, CancellationToken cancellationToken) =>
 {
     if (string.IsNullOrWhiteSpace(request?.Goal) || string.IsNullOrWhiteSpace(request.Tool)) return Results.BadRequest(new { error = "goal and tool are required." });
     var metadata = new Dictionary<string, System.Text.Json.JsonElement>
@@ -149,12 +152,48 @@ app.MapPost("/planner/execute", async (PlannerExecuteApiRequest? request, IPlann
     }
 
     var result = await executor.ExecuteAsync(planningResult.Plan, request.ApprovalIds, cancellationToken);
+    if (result.Status == PlannerStatus.RequiresConfirmation)
+    {
+        var pending = await confirmations.CreatePendingAsync(planningResult.Plan, planningResult.Plan.Tasks.Single().Id, cancellationToken);
+        return pending.Confirmation is null
+            ? Results.Json(result, statusCode: StatusCodes.Status409Conflict)
+            : Results.Json(new { pendingExecutionId = pending.Confirmation.PendingExecutionId, confirmation = pending.Confirmation }, statusCode: StatusCodes.Status409Conflict);
+    }
+
     return result.Status switch
     {
         PlannerStatus.Completed => Results.Ok(result),
         PlannerStatus.Cancelled => Results.Json(result, statusCode: 499),
-        PlannerStatus.RequiresConfirmation => Results.Json(result, statusCode: StatusCodes.Status409Conflict),
         PlannerStatus.Denied => Results.Json(result, statusCode: StatusCodes.Status403Forbidden),
+        _ => Results.BadRequest(result)
+    };
+});
+
+app.MapGet("/execution/confirmations/{id:guid}", async (Guid id, IExecutionConfirmationService confirmations, CancellationToken cancellationToken) =>
+{
+    var result = await confirmations.GetAsync(id, cancellationToken);
+    return result is null ? Results.NotFound() : Results.Ok(result);
+});
+
+app.MapPost("/execution/confirmations/{id:guid}", async (Guid id, ExecutionConfirmationDecisionApiRequest? request, IExecutionConfirmationService confirmations, CancellationToken cancellationToken) =>
+{
+    if (request?.Decision is null) return Results.BadRequest(new { error = "decision is required." });
+    var result = await confirmations.DecideAsync(id, request.Decision.Value, cancellationToken);
+    return result is null ? Results.NotFound() : !result.Transitioned ? Results.Conflict(result) : Results.Ok(result);
+});
+
+app.MapPost("/execution/pending/{id:guid}/execute", async (Guid id, IExecutionConfirmationService confirmations, IPlanExecutor executor, CancellationToken cancellationToken) =>
+{
+    var pending = await confirmations.TryTakeApprovedExecutionAsync(id, cancellationToken);
+    if (pending is null) return Results.Conflict(new { error = "The pending execution is not approved or is no longer available." });
+    if (pending.ApprovalId is null) return Results.Conflict(new { error = "The pending execution has no approval." });
+    var result = await executor.ExecuteAsync(pending.Plan, new Dictionary<Guid, Guid> { [pending.TaskId] = pending.ApprovalId.Value }, cancellationToken);
+    return result.Status switch
+    {
+        PlannerStatus.Completed => Results.Ok(result),
+        PlannerStatus.Denied => Results.Json(result, statusCode: StatusCodes.Status403Forbidden),
+        PlannerStatus.RequiresConfirmation => Results.Json(result, statusCode: StatusCodes.Status409Conflict),
+        PlannerStatus.Cancelled => Results.Json(result, statusCode: 499),
         _ => Results.BadRequest(result)
     };
 });

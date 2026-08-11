@@ -6,7 +6,7 @@ KernelOS es una plataforma personal de IA local. Kai es el asistente previsto so
 
 Están implementados chat local mediante Ollama, Tool System, Planner determinista con planificación, autorización y ejecución separadas, Filesystem Capability Read Only, Document Readers (TXT, Markdown, JSON y CSV), Knowledge Core, Memory Core In-Memory, retrieval interno, Context Builder, RAG Pipeline, Conversation Context Core y Kai Agent Core v1. Conversation Context recibe historial reciente del caller, selecciona por presupuesto y mantiene separado el mensaje actual.
 
-Siguen pendientes la integración segura del Planner en Kai, persistencia de conversaciones entre sesiones y experiencia pública de preguntas sobre documentos. La construcción de un plan no ejecuta Tools; las acciones con efectos laterales requieren una aprobación de un solo uso, ligada a la tarea y con caducidad. Conversation Context no es una memoria conversacional persistente. Tampoco existen Scheduler, automatización de Windows, MCP, integraciones de correo/calendario, OCR, voz o UI.
+Siguen pendientes la integración segura del Planner en Kai, persistencia de conversaciones entre sesiones y experiencia pública de preguntas sobre documentos. La construcción de un plan no ejecuta Tools; las acciones con efectos laterales requieren una aprobación de un solo uso, ligada a la tarea y con caducidad, creada mediante una confirmación API explícita. Conversation Context no es una memoria conversacional persistente. Tampoco existen Scheduler, automatización de Windows, MCP, integraciones de correo/calendario, OCR, voz o UI.
 
 ## Requisitos y ejecución
 

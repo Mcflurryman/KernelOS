@@ -29,6 +29,8 @@ future Kai Agent ─────────────────────
 
 Chat, Tool System, Planner determinista con construcción, autorización y ejecución separadas, Filesystem Read Only, Document Readers para TXT/Markdown/JSON/CSV, Knowledge Core, Memory Core In-Memory, retrieval, Context Builder, RAG Pipeline, Conversation Context y Kai Agent Core v1 están implementados. Kai no ejecuta Planner ni Tools; la policy exige confirmación para efectos laterales y falla cerrada ante metadata desconocida. Knowledge, retrieval, Context Builder y RAG son internos: no tienen endpoint ni Tool pública.
 
+La Execution Approval Surface conserva un pending snapshot opaco, permite la confirmación explícita externa y ejecuta después mediante el executor; no conecta Kai al Planner.
+
 Filesystem no accede a rutas no autorizadas. Document Readers reciben referencias autorizadas y el contenido documental es no confiable. Ollama es local en la configuración actual; chat y embeddings usan clientes y modelos separados.
 
 Las siguientes capas no existen todavía y no deben inferirse del diagrama: Kai Planner Orchestration, interfaz de confirmación, Scheduler, Windows Automation, MCP, integraciones de correo/calendario, OCR, Vision, voz y UI. El orden de evolución está en el [Architecture Roadmap](../roadmap/architecture-roadmap.md).

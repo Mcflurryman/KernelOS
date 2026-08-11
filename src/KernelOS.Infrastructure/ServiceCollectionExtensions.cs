@@ -61,6 +61,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IExecutionPolicy, DefaultExecutionPolicy>();
         services.AddSingleton<IExecutionApprovalStore, InMemoryExecutionApprovalStore>();
+        services.AddSingleton<IExecutionPendingStore, InMemoryExecutionPendingStore>();
+        services.AddSingleton<IExecutionConfirmationService, ExecutionConfirmationService>();
         services.AddSingleton<IExecutionGate, ExecutionGate>();
         services.AddSingleton<IPlanBuilder, PlanBuilder>();
         services.AddSingleton<IPlanExecutor, PlanExecutor>();

@@ -12,6 +12,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IKernelTool, DocumentTool>();
         services.AddSingleton<IToolRegistry, KernelToolRegistry>();
         services.AddSingleton<IToolRouter, KernelToolRouter>();
+        services.AddSingleton<IReadOnlyToolExecutionGateway, ReadOnlyToolExecutionGateway>();
 
         return services;
     }

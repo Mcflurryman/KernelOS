@@ -1,5 +1,6 @@
 using System.Text.Json;
 using KernelOS.Core;
+using KernelOS.Core.Execution;
 using KernelOS.Core.Documents;
 
 namespace KernelOS.Tools;
@@ -8,6 +9,7 @@ public sealed class DocumentTool(IDocumentReadService? service = null) : IKernel
 {
     public string Name => "document"; public string Description => "Reads supported documents."; public string Category => "documents";
     public IReadOnlyCollection<ToolCapability> Capabilities => [new("Read", "")];
+    public ToolExecutionMetadata ExecutionMetadata => new(true, false, false, ExecutionRiskLevel.Low);
     public IReadOnlyCollection<ToolParameter> Parameters => [new("operation", "Read operation.", "string", true), new("path", "Authorized document path.", "string", true), new("format", "Optional format.", "string", false)];
     public async Task<ToolExecutionResult> ExecuteAsync(ToolExecutionRequest request, CancellationToken cancellationToken = default)
     {

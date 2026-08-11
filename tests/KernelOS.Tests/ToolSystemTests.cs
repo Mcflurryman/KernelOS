@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using KernelOS.Core;
+using KernelOS.Core.Execution;
 using KernelOS.Tools;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -179,6 +180,20 @@ public sealed class ToolEndpointTests(WebApplicationFactory<Program> factory)
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
     }
+
+    [Fact]
+    public async Task PostToolDoesNotExecuteSideEffectToolDirectly()
+    {
+        SideEffectTestTool.Calls = 0;
+        using var customFactory = factory.WithWebHostBuilder(builder => builder.ConfigureServices(services => services.AddSingleton<IKernelTool, SideEffectTestTool>()));
+
+        using var response = await customFactory.CreateClient().PostAsync(
+            "/tools/side-effect-test",
+            JsonContent.Create(new { arguments = new { } }));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, SideEffectTestTool.Calls);
+    }
 }
 
 internal sealed class DuplicateEchoTool : IKernelTool
@@ -211,4 +226,20 @@ internal sealed class ThrowingTool : IKernelTool
 
     public Task<ToolExecutionResult> ExecuteAsync(ToolExecutionRequest request, CancellationToken cancellationToken = default) =>
         throw new InvalidOperationException("Unexpected failure.");
+}
+
+internal sealed class SideEffectTestTool : IKernelTool
+{
+    public static int Calls { get; set; }
+    public string Name => "side-effect-test";
+    public string Description => "Side-effect test tool.";
+    public string Category => "test";
+    public IReadOnlyCollection<ToolCapability> Capabilities => Array.Empty<ToolCapability>();
+    public IReadOnlyCollection<ToolParameter> Parameters => Array.Empty<ToolParameter>();
+    public ToolExecutionMetadata ExecutionMetadata => new(false, true, false, ExecutionRiskLevel.High);
+    public Task<ToolExecutionResult> ExecuteAsync(ToolExecutionRequest request, CancellationToken cancellationToken = default)
+    {
+        Calls++;
+        return Task.FromResult(ToolExecutionResult.Success("Completed."));
+    }
 }

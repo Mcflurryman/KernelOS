@@ -4,6 +4,8 @@
 
 ### Added
 
+- Tool Confirmation & Execution Policy Core: policy determinista, gate, metadata de riesgo y aprobaciones en memoria de un solo uso con expiración y huella de tarea.
+- Estados `RequiresConfirmation` y `Denied` para resultados del Planner.
 - Separación segura del Planner: `IPlanBuilder` construye planes sin efectos laterales e `IPlanExecutor` valida y ejecuta tareas secuencialmente mediante el router.
 - Estado `Planned`, validación completa previa a la ejecución, fail-fast y cancelación de tareas posteriores.
 - ADR 0023 y documentación de arquitectura para la frontera entre planificar y ejecutar.

@@ -113,11 +113,11 @@ app.MapGet("/tools/{name}", (string name, IToolRegistry toolRegistry) =>
 app.MapPost("/tools/{name}", async (
     string name,
     ToolExecutionApiRequest? request,
-    IToolRouter toolRouter,
+    IReadOnlyToolExecutionGateway toolExecutionGateway,
     CancellationToken cancellationToken) =>
 {
     var arguments = request?.Arguments ?? new Dictionary<string, System.Text.Json.JsonElement>();
-    var result = await toolRouter.ExecuteAsync(
+    var result = await toolExecutionGateway.ExecuteAsync(
         new ToolExecutionRequest(name, arguments),
         cancellationToken);
 
@@ -148,16 +148,18 @@ app.MapPost("/planner/execute", async (PlannerExecuteApiRequest? request, IPlann
             : Results.BadRequest(planningResult);
     }
 
-    var result = await executor.ExecuteAsync(planningResult.Plan, cancellationToken);
+    var result = await executor.ExecuteAsync(planningResult.Plan, request.ApprovalIds, cancellationToken);
     return result.Status switch
     {
         PlannerStatus.Completed => Results.Ok(result),
         PlannerStatus.Cancelled => Results.Json(result, statusCode: 499),
+        PlannerStatus.RequiresConfirmation => Results.Json(result, statusCode: StatusCodes.Status409Conflict),
+        PlannerStatus.Denied => Results.Json(result, statusCode: StatusCodes.Status403Forbidden),
         _ => Results.BadRequest(result)
     };
 });
 
-app.MapPost("/documents/read", async (DocumentReadApiRequest? request, IToolRouter router, CancellationToken cancellationToken) =>
+app.MapPost("/documents/read", async (DocumentReadApiRequest? request, IReadOnlyToolExecutionGateway toolExecutionGateway, CancellationToken cancellationToken) =>
 {
     if (string.IsNullOrWhiteSpace(request?.Path)) return Results.BadRequest(new { error = "path is required." });
     var arguments = new Dictionary<string, System.Text.Json.JsonElement>
@@ -166,7 +168,7 @@ app.MapPost("/documents/read", async (DocumentReadApiRequest? request, IToolRout
         ["path"] = System.Text.Json.JsonSerializer.SerializeToElement(request.Path)
     };
     if (!string.IsNullOrWhiteSpace(request.Format)) arguments["format"] = System.Text.Json.JsonSerializer.SerializeToElement(request.Format);
-    var result = await router.ExecuteAsync(new ToolExecutionRequest("document", arguments), cancellationToken);
+    var result = await toolExecutionGateway.ExecuteAsync(new ToolExecutionRequest("document", arguments), cancellationToken);
     return result.Status switch
     {
         ToolExecutionStatus.Success => Results.Ok(result),
@@ -180,11 +182,11 @@ app.MapPost("/documents/read", async (DocumentReadApiRequest? request, IToolRout
 });
 
 var filesystemOperations = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "search", "exists", "metadata", "resolve", "list" };
-app.MapPost("/filesystem/{operation}", async (string operation, ToolExecutionApiRequest? request, IToolRouter router, CancellationToken cancellationToken) =>
+app.MapPost("/filesystem/{operation}", async (string operation, ToolExecutionApiRequest? request, IReadOnlyToolExecutionGateway toolExecutionGateway, CancellationToken cancellationToken) =>
 {
     if (!filesystemOperations.Contains(operation)) return Results.BadRequest(new { error = "Invalid filesystem operation." });
     var args = new Dictionary<string,System.Text.Json.JsonElement>(request?.Arguments ?? new Dictionary<string,System.Text.Json.JsonElement>()) { ["operation"] = System.Text.Json.JsonSerializer.SerializeToElement(operation) };
-    var result = await router.ExecuteAsync(new ToolExecutionRequest("filesystem",args),cancellationToken);
+    var result = await toolExecutionGateway.ExecuteAsync(new ToolExecutionRequest("filesystem",args),cancellationToken);
     return result.Status==ToolExecutionStatus.Success?Results.Ok(result):result.Status==ToolExecutionStatus.Unauthorized?Results.Json(result,statusCode:403):result.Status==ToolExecutionStatus.NotFound?Results.NotFound(result):Results.BadRequest(result);
 });
 
@@ -196,7 +198,8 @@ static object CreateToolDescription(IKernelTool tool) => new
     description = tool.Description,
     category = tool.Category,
     capabilities = tool.Capabilities,
-    parameters = tool.Parameters
+    parameters = tool.Parameters,
+    executionMetadata = tool.ExecutionMetadata
 };
 
 static string GetProductVersion()

@@ -22,3 +22,5 @@ El rebuild es idempotente para el mismo snapshot y familia; cambios o deletes en
 No se registran contenido de Memory, textos de entrada, vectores, metadata completa, rutas ni excepciones crudas; solo familia, conteos, estado, duración y códigos seguros. No se emiten eventos de Execution Audit Trail: es mantenimiento interno, no una Tool.
 
 No hay endpoint, Tool, integración Kai, UI, worker/hosted service, auto-rebuild en startup ni persistencia de vectors o embeddings. El servicio exige exactamente un generator: cero o más de uno fallan por indisponibilidad o selección ambigua. El snapshot, resultados de embeddings y records sombra coexisten en memoria; v1 prioriza consistencia y simplicidad sobre optimización de corpus grandes.
+
+Hybrid Search Graceful Degradation no modifica `IMemorySnapshotProvider`, `IVectorReindexService`, `ReplaceFamilyAsync` ni esta persistencia. Solo permite que retrieval continúe con lexical cuando semantic no está disponible o falla.

@@ -76,7 +76,18 @@ public sealed class KaiAgent(
             var fallback = await ChatAsync(request, decision, cancellationToken);
             return fallback with { Warnings = [new("KAI_RAG_NO_CONTEXT_FALLBACK", "No retrieved context; used chat.")] };
         }
-        return new(result.Status == RagStatus.Success ? KaiStatus.Success : result.Status == RagStatus.NoContext ? KaiStatus.NoContext : KaiStatus.Failed, KaiMode.Rag, result.Answer, Decision: decision);
+        var status = result.Status switch
+        {
+            RagStatus.Success => KaiStatus.Success,
+            RagStatus.PartialSuccess => KaiStatus.PartialSuccess,
+            RagStatus.NoContext => KaiStatus.NoContext,
+            RagStatus.InvalidRequest => KaiStatus.InvalidRequest,
+            RagStatus.ProviderUnavailable => KaiStatus.ProviderUnavailable,
+            RagStatus.Cancelled => KaiStatus.Cancelled,
+            _ => KaiStatus.Failed
+        };
+        var warnings = result.Warnings?.Select(warning => new KaiWarning(warning.Code, warning.Message)).ToArray();
+        return new(status, KaiMode.Rag, result.Answer, result.Citations, warnings, result.Model, decision);
     }
 
     private async Task<KaiResponse> ChatAsync(KaiRequest request, KaiDecision decision, CancellationToken cancellationToken)

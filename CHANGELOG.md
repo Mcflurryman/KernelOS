@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Hybrid Search Graceful Degradation: Hybrid conserva resultados lexical-only o semantic-only ante fallos técnicos de la otra rama, renormaliza la rama sana y propaga resultados parciales utilizables por RAG y Kai. Sin selector de providers, endpoints, Tools ni cambios de Core.
+- ADR 0032 y documentación de arquitectura de degradación controlada.
+
 - Semantic Index Rebuild Foundation: snapshot durable de Memory, rebuild explícito de una familia vectorial con batches secuenciales, publicación atómica y preservación del índice anterior ante fallo o cancelación. No incorpora endpoint, Tool, Kai, startup automático ni persistencia de vectors/embeddings.
 - ADR 0031 y documentación de arquitectura del reindexado semántico.
 

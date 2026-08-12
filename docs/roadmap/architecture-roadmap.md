@@ -3,6 +3,7 @@
 ## Actualización de Retrieval
 
 - Semantic Index Rebuild Foundation desde Memory durable: ✅ (rebuild explícito y atómico por familia; vectors y embeddings siguen volátiles).
+- Hybrid Search Graceful Degradation: ✅ (fallback lexical-only o semantic-only ante fallo técnico; sin selector de provider).
 - Sync incremental, selección explícita de provider, auto-reindex de arranque y persistencia vectorial: ⬜.
 
 El Execution Audit Trail interno está implementado y validado; no implica persistencia, UI, métricas ni una API pública de audit.
@@ -47,7 +48,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Vector Index: ✅
 - Persistencia de Vector Index, embeddings y pipeline de reindexado desde Memory durable: ⬜
 - Semantic Search: ✅
-- Hybrid Search: ✅
+- Hybrid Search y degradación controlada: ✅
 
 ## Fase 5 — Context & Intelligence
 

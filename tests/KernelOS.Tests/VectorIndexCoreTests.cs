@@ -71,6 +71,91 @@ public sealed class VectorIndexCoreTests
         Assert.Single(results.Where(result => result.Status == VectorIndexStatus.Success)); Assert.Equal(1, await index.CountAsync());
     }
 
+    [Fact]
+    public async Task ReplaceFamilyPublishesNewFamilyAndPreservesOtherFamilies()
+    {
+        var index = Create();
+        var old = Record(model: "active");
+        var other = Record(model: "other");
+        var replacement = Record(model: "active");
+        await index.AddAsync(new(old));
+        await index.AddAsync(new(other));
+
+        var result = await index.ReplaceFamilyAsync(new(VectorFamilyKey.From(replacement), [replacement]));
+
+        Assert.Equal(VectorIndexStatus.Success, result.Status);
+        Assert.Equal(1, result.ReplacedCount);
+        Assert.Equal(VectorIndexStatus.NotFound, (await index.GetAsync(old.Id)).Status);
+        Assert.Equal(VectorIndexStatus.Success, (await index.GetAsync(replacement.Id)).Status);
+        Assert.Equal(VectorIndexStatus.Success, (await index.GetAsync(other.Id)).Status);
+        Assert.Equal(2, await index.CountAsync());
+    }
+
+    [Fact]
+    public async Task ReplaceFamilyValidatesEverythingBeforePublishing()
+    {
+        var index = Create();
+        var old = Record(); await index.AddAsync(new(old));
+        var duplicateInput = Guid.NewGuid();
+        var first = Record(inputId: duplicateInput);
+        var second = Record(inputId: duplicateInput);
+
+        var result = await index.ReplaceFamilyAsync(new(VectorFamilyKey.From(first), [first, second]));
+
+        Assert.Equal(VectorIndexStatus.InvalidRequest, result.Status);
+        Assert.Equal(VectorIndexStatus.Success, (await index.GetAsync(old.Id)).Status);
+        Assert.Equal(1, await index.CountAsync());
+
+        var invalid = Record() with { ContentHash = "different" };
+        var invalidResult = await index.ReplaceFamilyAsync(new(VectorFamilyKey.From(invalid), [invalid]));
+        Assert.Equal(VectorIndexStatus.InvalidRequest, invalidResult.Status);
+        Assert.Equal(VectorIndexStatus.Success, (await index.GetAsync(old.Id)).Status);
+    }
+
+    [Fact]
+    public async Task ReplaceFamilyWithEmptySetRemovesOnlyThatFamily()
+    {
+        var index = Create();
+        var active = Record(model: "active"); var other = Record(model: "other");
+        await index.AddAsync(new(active)); await index.AddAsync(new(other));
+
+        var result = await index.ReplaceFamilyAsync(new(VectorFamilyKey.From(active), []));
+
+        Assert.Equal(VectorIndexStatus.Success, result.Status);
+        Assert.Equal(0, result.ReplacedCount);
+        Assert.False(await index.ContainsAsync(active.Id));
+        Assert.True(await index.ContainsAsync(other.Id));
+        Assert.Single((await index.QueryAsync(new(Model: "other", Limit: 10))).Records!);
+    }
+
+    [Fact]
+    public async Task ReplaceFamilyCancellationAndConcurrentReadersPreserveCompleteStates()
+    {
+        var index = Create();
+        var old = Record(model: "active"); await index.AddAsync(new(old));
+        var replacement = Record(model: "active");
+        using var cancelled = new CancellationTokenSource(); cancelled.Cancel();
+
+        Assert.Equal(VectorIndexStatus.Cancelled, (await index.ReplaceFamilyAsync(new(VectorFamilyKey.From(replacement), [replacement]), cancelled.Token)).Status);
+        Assert.Equal(VectorIndexStatus.Success, (await index.GetAsync(old.Id)).Status);
+
+        var observations = new List<Guid>();
+        var reader = Task.Run(async () =>
+        {
+            for (var indexValue = 0; indexValue < 100; indexValue++)
+            {
+                var query = await index.QueryAsync(new(Model: "active", Limit: 10));
+                observations.AddRange(query.Records!.Select(record => record.Id));
+            }
+        });
+        var replace = index.ReplaceFamilyAsync(new(VectorFamilyKey.From(replacement), [replacement]));
+        await Task.WhenAll(reader, replace);
+        var replaced = await replace;
+
+        Assert.Equal(VectorIndexStatus.Success, replaced.Status);
+        Assert.All(observations, observation => Assert.True(observation == old.Id || observation == replacement.Id));
+    }
+
     [Theory]
     [InlineData("provider")]
     [InlineData("model")]

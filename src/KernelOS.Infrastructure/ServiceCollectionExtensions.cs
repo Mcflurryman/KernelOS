@@ -24,7 +24,8 @@ public static class ServiceCollectionExtensions
             .AddRagInfrastructure(configuration)
             .AddConversationInfrastructure(configuration)
             .AddKaiInfrastructure(configuration)
-            .AddEmbeddingInfrastructure(configuration);
+            .AddEmbeddingInfrastructure(configuration)
+            .AddVectorReindexInfrastructure();
 
         return services;
     }

@@ -42,6 +42,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 - [Visión del proyecto](PROJECT.md)
 - [Arquitectura actual](docs/architecture/overview.md)
 - [Persistence Foundation](docs/architecture/persistence-foundation.md)
+- [Semantic Index Rebuild Foundation](docs/architecture/semantic-index-rebuild.md)
 - [Execution Audit Trail](docs/architecture/execution-audit-trail.md)
 - [Roadmap](docs/roadmap/roadmap.md)
 - [Decisiones arquitectónicas](docs/decisions/)

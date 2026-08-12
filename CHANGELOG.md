@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Semantic Index Rebuild Foundation: snapshot durable de Memory, rebuild explícito de una familia vectorial con batches secuenciales, publicación atómica y preservación del índice anterior ante fallo o cancelación. No incorpora endpoint, Tool, Kai, startup automático ni persistencia de vectors/embeddings.
+- ADR 0031 y documentación de arquitectura del reindexado semántico.
+
 - Persistence Foundation: `IMemoryStore` runtime durable sobre SQLite local, bootstrap y migración versionada, transacciones de agregado y pruebas de paridad, durabilidad, concurrencia e integridad. Vector Index, embeddings, approvals, pending executions, Audit Trail y Conversation Context siguen sin persistencia.
 - ADR 0030 y documentación de arquitectura de Persistence Foundation.
 

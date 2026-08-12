@@ -1,5 +1,10 @@
 # Product Roadmap
 
+## Actualización de Knowledge
+
+- Reconstruir explícitamente el índice semántico desde Memory durable: ✅ (sin auto-startup ni persistencia vectorial).
+- Sincronizar automáticamente Memory con el índice semántico y hardening lexical-only para Hybrid/RAG: ⬜.
+
 Existe una traza interna de ejecución para observabilidad de dominio; no es una feature visible, persistente ni accesible por endpoint.
 
 > Kai puede iniciar acciones explícitas bajo policy y devolver confirmación pendiente. No hay auto-approval, agent loop, scheduler, memoria conversacional persistente, navegador, Spotify, Maps, trading ni coding agent.

@@ -18,3 +18,41 @@ public sealed record MemoryDeleteResult(MemoryStatus Status, string? Error = nul
 public sealed record MemoryGetResult(MemoryStatus Status, MemoryDocument? Document = null, string? Error = null);
 public sealed record MemoryQuery(string? Id = null, Guid? KnowledgeDocumentId = null, Guid? MemoryItemId = null, KnowledgeItemType? ItemType = null, string? ExactContent = null, string? ContentHash = null, string? MetadataKey = null, string? MetadataValue = null, int Limit = 100, int Offset = 0);
 public sealed record MemoryQueryResult(MemoryStatus Status, IReadOnlyList<MemoryDocument>? Documents = null, string? Error = null);
+public sealed record MemorySnapshotResult(MemoryStatus Status, MemorySnapshot? Snapshot = null, string? Error = null);
+
+public sealed class MemorySnapshot
+{
+    public MemorySnapshot(IEnumerable<MemoryDocument> documents, DateTimeOffset capturedAt)
+    {
+        var copies = documents.Select(CopyDocument).ToArray();
+        Documents = Array.AsReadOnly(copies);
+        TotalDocuments = copies.Length;
+        TotalItems = copies.Sum(document => document.Items.Count);
+        CapturedAt = capturedAt;
+    }
+
+    public IReadOnlyList<MemoryDocument> Documents { get; }
+    public int TotalDocuments { get; }
+    public int TotalItems { get; }
+    public DateTimeOffset CapturedAt { get; }
+
+    private static MemoryDocument CopyDocument(MemoryDocument document) => document with
+    {
+        Version = document.Version with { },
+        Items = Array.AsReadOnly(document.Items.Select(CopyItem).ToArray()),
+        Metadata = CopyMetadata(document.Metadata)
+    };
+
+    private static MemoryItem CopyItem(MemoryItem item) => item with
+    {
+        Source = item.Source with { Locator = item.Source.Locator is null ? null : item.Source.Locator with { } },
+        Metadata = CopyMetadata(item.Metadata)
+    };
+
+    private static KnowledgeMetadata CopyMetadata(KnowledgeMetadata metadata) => metadata with
+    {
+        Properties = metadata.Properties is null
+            ? null
+            : new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(new Dictionary<string, string>(metadata.Properties, StringComparer.Ordinal))
+    };
+}

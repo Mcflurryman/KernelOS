@@ -1,5 +1,7 @@
 # Planner
 
+El builder conserva el contexto de audit recibido o crea un flow interno para Planner directo; el executor reutiliza ese flow para preflight y ejecución. Los eventos nunca incluyen argumentos ni resultados.
+
 `POST /kai` puede iniciar el flujo Planner con una Tool explícita; sigue pasando por Plan, policy, gate y executor.
 
 > Estado: planificación y ejecución están separadas. `IPlanner` es una fachada de planificación pura sobre `IPlanBuilder`; `IPlanExecutor` es la única capa del Planner que invoca `IToolRouter`.

@@ -1,5 +1,7 @@
 # KernelOS
 
+KernelOS incorpora un Audit Trail interno para correlacionar decisiones y ejecuciones con metadata segura; no almacena payloads sensibles ni expone una API pública.
+
 Kai Planner Orchestration v1 permite `POST /kai` con una Tool explícita: las acciones read-only autorizadas se ejecutan bajo policy; los side effects devuelven `RequiresConfirmation` y un pending externo. Los planes multi-task completan preflight de autorización antes de cualquier Tool. Kai no autoaprueba ni ejecuta fuera del executor.
 
 KernelOS es una plataforma personal de IA local. Kai es el asistente previsto sobre esa plataforma. El proyecto es un monolito modular .NET 8: Core define contratos; Infrastructure integra proveedores locales; Tools controla acciones; Api expone HTTP.
@@ -38,6 +40,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 
 - [Visión del proyecto](PROJECT.md)
 - [Arquitectura actual](docs/architecture/overview.md)
+- [Execution Audit Trail](docs/architecture/execution-audit-trail.md)
 - [Roadmap](docs/roadmap/roadmap.md)
 - [Decisiones arquitectónicas](docs/decisions/)
 - [Guía de desarrollo](docs/guides/git-workflow.md)

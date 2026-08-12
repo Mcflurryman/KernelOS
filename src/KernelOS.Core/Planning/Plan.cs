@@ -1,2 +1,2 @@
 namespace KernelOS.Core.Planning;
-public sealed record Plan(Guid Id, Guid GoalId, IReadOnlyCollection<PlanTask> Tasks, PlannerStatus Status, DateTimeOffset? StartedAt, DateTimeOffset? FinishedAt);
+public sealed record Plan(Guid Id, Guid GoalId, IReadOnlyCollection<PlanTask> Tasks, PlannerStatus Status, DateTimeOffset? StartedAt, DateTimeOffset? FinishedAt, Audit.ExecutionAuditContext? AuditContext = null);

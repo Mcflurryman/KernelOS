@@ -1,5 +1,7 @@
 # Multi-task Authorization Preflight
 
+El preflight registra inicio, evaluación segura de cada tarea y resultado agregado dentro del flow del Plan. La instrumentación no cambia la precedencia ni permite ejecución parcial.
+
 Un plan multi-task no puede ejecutar una Tool inicial y descubrir después que otra tarea requiere confirmación o está denegada. Ese orden produciría efectos laterales antes de conocer la autorización global.
 
 `IPlanExecutor` evalúa todas las tareas mediante `IExecutionPreflight` antes de invocar `IToolRouter`. La decisión agregada conserva la precedencia `Deny > RequireConfirmation > Allow`: una denegación detiene el plan, una confirmación pendiente detiene el plan si no hay denegación y solo un resultado global `Allow` permite comenzar la ejecución.

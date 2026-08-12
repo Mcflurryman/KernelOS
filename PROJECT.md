@@ -1,5 +1,7 @@
 # Proyecto KernelOS
 
+> El estado actual incluye un servicio interno y explícito de rebuild del índice semántico desde Memory durable. No añade sync incremental, auto-reindex al arranque ni persistencia de vectors o embeddings.
+
 El sistema incluye un Audit Trail interno y fail-open para la trazabilidad segura de decisiones y ejecuciones; no es persistente ni una capacidad pública.
 
 Kai puede iniciar Planner para acciones explícitas bajo policy. La aprobación de side effects continúa siendo una decisión externa; no hay agent loop ni autonomía.

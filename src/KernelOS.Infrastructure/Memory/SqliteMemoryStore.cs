@@ -11,7 +11,7 @@ namespace KernelOS.Infrastructure.Memory;
 public sealed class SqliteMemoryStore(
     ISqliteConnectionFactory connections,
     IOptions<MemoryOptions> options,
-    ILogger<SqliteMemoryStore> logger) : IMemoryStore
+    ILogger<SqliteMemoryStore> logger) : IMemoryStore, IMemorySnapshotProvider
 {
     private readonly MemoryOptionsSnapshot limits = new(options.Value.MaxDocuments, options.Value.MaxItemsPerDocument, options.Value.MaxQueryResults);
 
@@ -166,6 +166,37 @@ public sealed class SqliteMemoryStore(
         catch (Exception) { SqliteMemoryStoreLog.QueryFailed(logger); return new(MemoryStatus.Failed, Error: "Memory query failed."); }
     }
 
+    public async Task<MemorySnapshotResult> CreateSnapshotAsync(CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested) return new(MemoryStatus.Cancelled);
+        try
+        {
+            await using var connection = await connections.OpenConnectionAsync(cancellationToken);
+            await BeginDeferredAsync(connection, cancellationToken);
+            try
+            {
+                var documents = new List<MemoryDocument>();
+                await using var command = connection.CreateCommand();
+                command.CommandText = "SELECT id FROM memory_documents ORDER BY updated_at_utc DESC, id ASC;";
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                var ids = new List<Guid>();
+                while (await reader.ReadAsync(cancellationToken)) ids.Add(ReadGuid(reader, 0));
+                await reader.DisposeAsync();
+                foreach (var id in ids)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var document = await ReadDocumentAsync(connection, id, cancellationToken);
+                    if (document is not null) documents.Add(document);
+                }
+                await CommitAsync(connection, cancellationToken);
+                return new(MemoryStatus.Success, new MemorySnapshot(documents, DateTimeOffset.UtcNow));
+            }
+            catch { await RollbackAsync(connection); throw; }
+        }
+        catch (OperationCanceledException) { return new(MemoryStatus.Cancelled); }
+        catch (Exception) { SqliteMemoryStoreLog.SnapshotFailed(logger); return new(MemoryStatus.Failed, Error: "Memory snapshot creation failed."); }
+    }
+
     private static async Task InsertDocumentAsync(SqliteConnection connection, MemoryDocument document, CancellationToken token)
     {
         await ExecuteAsync(connection, "INSERT INTO memory_documents (id, knowledge_document_id, created_at_utc, updated_at_utc, version_number, version_updated_at_utc, version_content_hash, content_hash, mime_type, format, language) VALUES ($id, $knowledgeDocumentId, $createdAt, $updatedAt, $versionNumber, $versionUpdatedAt, $versionContentHash, $contentHash, $mimeType, $format, $language);", command =>
@@ -289,4 +320,6 @@ internal static partial class SqliteMemoryStoreLog
     internal static partial void DeleteFailed(ILogger logger);
     [LoggerMessage(EventId = 44, Level = LogLevel.Error, Message = "SQLite memory query failed.")]
     internal static partial void QueryFailed(ILogger logger);
+    [LoggerMessage(EventId = 45, Level = LogLevel.Error, Message = "SQLite memory snapshot creation failed.")]
+    internal static partial void SnapshotFailed(ILogger logger);
 }

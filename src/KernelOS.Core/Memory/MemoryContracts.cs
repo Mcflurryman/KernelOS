@@ -8,3 +8,8 @@ public interface IMemoryStore
     Task<MemoryGetResult> GetAsync(string id, CancellationToken cancellationToken = default);
     Task<MemoryQueryResult> QueryAsync(MemoryQuery query, CancellationToken cancellationToken = default);
 }
+
+public interface IMemorySnapshotProvider
+{
+    Task<MemorySnapshotResult> CreateSnapshotAsync(CancellationToken cancellationToken = default);
+}

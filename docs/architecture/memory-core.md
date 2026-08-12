@@ -1,5 +1,7 @@
 # Memory Core
 
+> La captura `IMemorySnapshotProvider` materializa una copia consistente del corpus para el reindexado interno; no sustituye las consultas normales. Véase [Semantic Index Rebuild Foundation](semantic-index-rebuild.md).
+
 Memory Core es el almacén interno durable de `KnowledgeDocument`. Recibe conocimiento ya normalizado y ofrece Store, Update, Delete, Get y consultas exactas; no lee archivos, no conoce Readers, RawDocument, Filesystem, LLM, Planner ni herramientas.
 
 El runtime registra `SqliteMemoryStore` singleton mediante DI. SQLite conserva el agregado completo de forma local, transaccional y durable; su inicialización y límites de seguridad se describen en [Persistence Foundation](persistence-foundation.md). `InMemoryMemoryStore` se conserva para pruebas de contrato, con estructuras concurrentes y actualizaciones compare-and-swap atómicas.

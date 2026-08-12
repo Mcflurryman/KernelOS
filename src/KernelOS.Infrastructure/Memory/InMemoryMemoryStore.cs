@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 
 namespace KernelOS.Infrastructure.Memory;
 
-public sealed class InMemoryMemoryStore : IMemoryStore, IDisposable
+public sealed class InMemoryMemoryStore : IMemoryStore, IMemorySnapshotProvider, IDisposable
 {
     private readonly ConcurrentDictionary<Guid, MemoryDocument> documents = new();
     private readonly ConcurrentDictionary<Guid, Guid> knowledgeDocumentIds = new();
@@ -37,31 +37,40 @@ public sealed class InMemoryMemoryStore : IMemoryStore, IDisposable
         finally { storeGate.Release(); }
     }
 
-    public Task<MemoryUpdateResult> UpdateAsync(MemoryUpdateRequest request, CancellationToken cancellationToken = default)
+    public async Task<MemoryUpdateResult> UpdateAsync(MemoryUpdateRequest request, CancellationToken cancellationToken = default)
     {
-        if (cancellationToken.IsCancellationRequested) return Task.FromResult(new MemoryUpdateResult(MemoryStatus.Cancelled));
-        if (!Guid.TryParse(request.Id, out var id) || request.Items is null || request.Metadata is null || request.Items.Count > options.MaxItemsPerDocument) return Task.FromResult(new MemoryUpdateResult(MemoryStatus.InvalidRequest, Error: "The memory update request is invalid."));
+        if (cancellationToken.IsCancellationRequested) return new(MemoryStatus.Cancelled);
+        if (!Guid.TryParse(request.Id, out var id) || request.Items is null || request.Metadata is null || request.Items.Count > options.MaxItemsPerDocument) return new(MemoryStatus.InvalidRequest, Error: "The memory update request is invalid.");
+        try { await storeGate.WaitAsync(cancellationToken); }
+        catch (OperationCanceledException) { return new(MemoryStatus.Cancelled); }
         try
         {
             while (documents.TryGetValue(id, out var current))
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var updated = MemoryDocumentFactory.Update(current, request.Items, request.Metadata, DateTimeOffset.UtcNow);
-                if (documents.TryUpdate(id, updated, current)) return Task.FromResult(new MemoryUpdateResult(MemoryStatus.Success, MemoryDocumentFactory.Copy(updated)));
+                if (documents.TryUpdate(id, updated, current)) return new(MemoryStatus.Success, MemoryDocumentFactory.Copy(updated));
             }
-            return Task.FromResult(new MemoryUpdateResult(MemoryStatus.NotFound));
+            return new(MemoryStatus.NotFound);
         }
-        catch (OperationCanceledException) { return Task.FromResult(new MemoryUpdateResult(MemoryStatus.Cancelled)); }
-        catch { return Task.FromResult(new MemoryUpdateResult(MemoryStatus.Failed, Error: "Memory update failed.")); }
+        catch (OperationCanceledException) { return new(MemoryStatus.Cancelled); }
+        catch { return new(MemoryStatus.Failed, Error: "Memory update failed."); }
+        finally { storeGate.Release(); }
     }
 
-    public Task<MemoryDeleteResult> DeleteAsync(MemoryDeleteRequest request, CancellationToken cancellationToken = default)
+    public async Task<MemoryDeleteResult> DeleteAsync(MemoryDeleteRequest request, CancellationToken cancellationToken = default)
     {
-        if (cancellationToken.IsCancellationRequested) return Task.FromResult(new MemoryDeleteResult(MemoryStatus.Cancelled));
-        if (!Guid.TryParse(request.Id, out var id)) return Task.FromResult(new MemoryDeleteResult(MemoryStatus.InvalidRequest, "The memory delete request is invalid."));
-        if (!documents.TryRemove(id, out var removed)) return Task.FromResult(new MemoryDeleteResult(MemoryStatus.NotFound));
-        knowledgeDocumentIds.TryRemove(removed.KnowledgeDocumentId, out _);
-        return Task.FromResult(new MemoryDeleteResult(MemoryStatus.Success));
+        if (cancellationToken.IsCancellationRequested) return new(MemoryStatus.Cancelled);
+        if (!Guid.TryParse(request.Id, out var id)) return new(MemoryStatus.InvalidRequest, "The memory delete request is invalid.");
+        try { await storeGate.WaitAsync(cancellationToken); }
+        catch (OperationCanceledException) { return new(MemoryStatus.Cancelled); }
+        try
+        {
+            if (!documents.TryRemove(id, out var removed)) return new(MemoryStatus.NotFound);
+            knowledgeDocumentIds.TryRemove(removed.KnowledgeDocumentId, out _);
+            return new(MemoryStatus.Success);
+        }
+        finally { storeGate.Release(); }
     }
 
     public Task<MemoryGetResult> GetAsync(string id, CancellationToken cancellationToken = default)
@@ -83,6 +92,26 @@ public sealed class InMemoryMemoryStore : IMemoryStore, IDisposable
             return Task.FromResult(new MemoryQueryResult(MemoryStatus.Success, results));
         }
         catch { return Task.FromResult(new MemoryQueryResult(MemoryStatus.Failed, Error: "Memory query failed.")); }
+    }
+
+    public async Task<MemorySnapshotResult> CreateSnapshotAsync(CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested) return new(MemoryStatus.Cancelled);
+        try { await storeGate.WaitAsync(cancellationToken); }
+        catch (OperationCanceledException) { return new(MemoryStatus.Cancelled); }
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var documentsSnapshot = documents.Values
+                .OrderByDescending(document => document.UpdatedAt)
+                .ThenBy(document => document.Id)
+                .Select(MemoryDocumentFactory.Copy)
+                .ToArray();
+            return new(MemoryStatus.Success, new MemorySnapshot(documentsSnapshot, DateTimeOffset.UtcNow));
+        }
+        catch (OperationCanceledException) { return new(MemoryStatus.Cancelled); }
+        catch { return new(MemoryStatus.Failed, Error: "Memory snapshot creation failed."); }
+        finally { storeGate.Release(); }
     }
 
     private static bool Matches(MemoryDocument document, MemoryQuery query) =>

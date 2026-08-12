@@ -1,5 +1,7 @@
 # Vector Index Core
 
+> `ReplaceFamilyAsync` publica atómicamente un conjunto validado de una familia y preserva las demás. El reindexado explícito sigue sin hacer durables vectors ni embeddings.
+
 Vector Index Core almacena `EmbeddingVector` ya generados junto a referencias por ID. Es una capa interna independiente: no genera embeddings, no llama a Ollama, no modifica Memory, no interpreta contenido y no calcula similitud.
 
 `InMemoryVectorIndex` mantiene registros en proceso y admite varias familias incompatibles. La identidad única es `InputId + Provider + Model + Version + Dimensions`; un mismo input puede coexistir con modelos, versiones o dimensiones distintas. `QueryAsync` solo filtra administrativamente por referencias, familia, hash o metadata y ordena por `UpdatedAt` descendente e Id ascendente.

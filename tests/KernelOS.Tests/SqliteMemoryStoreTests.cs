@@ -297,12 +297,16 @@ public sealed class SqliteMemoryStoreTests
 
         var duringGet = fixture.Store.GetAsync(created.Id.ToString("D"));
         var duringQuery = fixture.Store.QueryAsync(new MemoryQuery(Limit: 10));
-        await Task.WhenAll(duringGet, duringQuery);
+        var duringSnapshot = fixture.Store.CreateSnapshotAsync();
+        await Task.WhenAll(duringGet, duringQuery, duringSnapshot);
         var observedGet = await duringGet;
         var observedQuery = await duringQuery;
+        var observedSnapshot = await duringSnapshot;
 
         Assert.True(IsSnapshot(observedGet.Document!, "Kai", "item-OLD"));
         Assert.True(IsSnapshot(observedQuery.Documents!.Single(), "Kai", "item-OLD"));
+        Assert.Equal(MemoryStatus.Success, observedSnapshot.Status);
+        Assert.True(IsSnapshot(observedSnapshot.Snapshot!.Documents.Single(), "Kai", "item-OLD"));
 
         await ExecuteAsync(writer, "UPDATE memory_items SET content = $content, content_hash = $hash WHERE document_id = $id;", ("$content", "item-NEW"), ("$hash", "hash-item-NEW"), ("$id", created.Id.ToString("D")));
         await using var commit = writer.CreateCommand();

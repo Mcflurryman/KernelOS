@@ -1,5 +1,7 @@
 # RAG Pipeline Core
 
+> Deuda conocida: `ProviderUnavailable` de Hybrid no degrada todavía RAG a lexical-only.
+
 RAG Pipeline orquesta `IHybridSearchEngine`, `IContextBuilder`, `IRagPromptBuilder` e `IChatModel`. No conoce filesystem, Readers, índices vectoriales, embeddings, Tools ni Planner. El flujo es query → retrieval → ContextPack → prompt determinista → modelo → respuesta.
 
 Si retrieval no devuelve resultados o Context Builder no produce items, devuelve `NoContext` y no llama al modelo. Así se diferencia una respuesta basada en conocimiento recuperado de una respuesta general del modelo.

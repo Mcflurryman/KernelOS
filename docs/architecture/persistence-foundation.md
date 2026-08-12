@@ -1,5 +1,7 @@
 # Persistence Foundation
 
+> Memory durable puede alimentar un reindexado vectorial explícito desde snapshot, pero vectors y embeddings permanecen volátiles. Véase [Semantic Index Rebuild Foundation](semantic-index-rebuild.md).
+
 Memory es la fuente durable de conocimiento normalizado de KernelOS. `KnowledgeDocument` llega desde Knowledge Core y `IMemoryStore` conserva el agregado `MemoryDocument`; no se expone un endpoint ni una Tool de Memory. En la creación actual, `MemoryDocument.Id` y `MemoryDocument.KnowledgeDocumentId` son ambos `KnowledgeDocument.Id`.
 
 Core mantiene contratos y modelos sin conocer SQLite. Infrastructure implementa el runtime con `SqliteMemoryStore`, `Microsoft.Data.Sqlite` y ADO.NET directo; API solo compone el módulo mediante DI. `InMemoryMemoryStore` se conserva para pruebas de contrato. Vector Index, embeddings, approvals, pending executions, Audit Trail y Conversation Context no participan en esta base de datos.

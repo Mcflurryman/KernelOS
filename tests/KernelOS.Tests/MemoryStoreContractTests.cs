@@ -78,6 +78,31 @@ public sealed class MemoryStoreContractTests
         }
     }
 
+    [Fact]
+    public async Task SnapshotProvidersReturnCompleteOrderedAndIsolatedMaterializedViews()
+    {
+        foreach (var create in Factories())
+        {
+            await using var scope = await create();
+            var first = (await scope.Store.StoreAsync(new(Document("first", KnowledgeItemType.Text, "first-hash", "author", "First")))).Document!;
+            var second = (await scope.Store.StoreAsync(new(Document("second", KnowledgeItemType.Code, "second-hash", "author", "Second")))).Document!;
+
+            var result = await scope.Snapshots.CreateSnapshotAsync();
+
+            Assert.Equal(MemoryStatus.Success, result.Status);
+            var snapshot = result.Snapshot!;
+            Assert.Equal(2, snapshot.TotalDocuments);
+            Assert.Equal(2, snapshot.TotalItems);
+            Assert.Equal(snapshot.Documents.OrderByDescending(document => document.UpdatedAt).ThenBy(document => document.Id).Select(document => document.Id), snapshot.Documents.Select(document => document.Id));
+            Assert.IsType<System.Collections.ObjectModel.ReadOnlyCollection<MemoryDocument>>(snapshot.Documents);
+            Assert.IsType<System.Collections.ObjectModel.ReadOnlyDictionary<string, string>>(snapshot.Documents[0].Metadata.Properties);
+            Assert.Equal("First", (await scope.Store.GetAsync(first.Id.ToString("D"))).Document!.Metadata.Properties!["author"]);
+
+            using var cancelled = new CancellationTokenSource(); cancelled.Cancel();
+            Assert.Equal(MemoryStatus.Cancelled, (await scope.Snapshots.CreateSnapshotAsync(cancelled.Token)).Status);
+        }
+    }
+
     private static IEnumerable<Func<Task<StoreScope>>> Factories()
     {
         yield return () => Task.FromResult<StoreScope>(new InMemoryScope());
@@ -96,16 +121,18 @@ public sealed class MemoryStoreContractTests
         Assert.Equal(expected.Items.Select(item => item.Content), actual.Items.Select(item => item.Content)); Assert.Equal(expected.Metadata.Properties, actual.Metadata.Properties);
     }
 
-    private abstract class StoreScope : IAsyncDisposable { internal abstract IMemoryStore Store { get; } public abstract ValueTask DisposeAsync(); }
+    private abstract class StoreScope : IAsyncDisposable { internal abstract IMemoryStore Store { get; } internal abstract IMemorySnapshotProvider Snapshots { get; } public abstract ValueTask DisposeAsync(); }
     private sealed class InMemoryScope : StoreScope
     {
         private readonly InMemoryMemoryStore store = new(Options.Create(new MemoryOptions { MaxDocuments = 100, MaxItemsPerDocument = 100, MaxQueryResults = 2 }));
         internal override IMemoryStore Store => store;
+        internal override IMemorySnapshotProvider Snapshots => store;
         public override ValueTask DisposeAsync() { store.Dispose(); return ValueTask.CompletedTask; }
     }
     private sealed class SqliteScope(SqliteMemoryFixture fixture) : StoreScope
     {
         internal override IMemoryStore Store => fixture.Store;
+        internal override IMemorySnapshotProvider Snapshots => fixture.Store;
         internal static async Task<StoreScope> CreateAsync() => new SqliteScope(await SqliteMemoryFixture.CreateAsync());
         public override ValueTask DisposeAsync() => fixture.DisposeAsync();
     }

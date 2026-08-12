@@ -1,5 +1,7 @@
 # Arquitectura actual
 
+> Semantic Index Rebuild Foundation añade un rebuild interno y explícito: `SQLite Memory → Snapshot → GenerateBatchAsync → shadow VectorRecords → ReplaceFamilyAsync → SemanticSearch`. La publicación atómica mantiene disponible el índice anterior durante la construcción.
+
 El Audit Trail interno correlaciona las transiciones de Kai, Planner, preflight, confirmation, executor y gateway read-only. Es observacional, fail-open, privado y no expone HTTP.
 
 Kai Planner Orchestration v1 conecta Kai con Planner y executor mediante contratos de alto nivel; las Tools y approvals permanecen fuera de Kai. `Program.cs` compone módulos HTTP y `AddInfrastructure` compone los servicios internos por dominio.

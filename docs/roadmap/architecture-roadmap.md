@@ -1,5 +1,10 @@
 # Architecture Roadmap
 
+## Actualización de Retrieval
+
+- Semantic Index Rebuild Foundation desde Memory durable: ✅ (rebuild explícito y atómico por familia; vectors y embeddings siguen volátiles).
+- Sync incremental, selección explícita de provider, auto-reindex de arranque y persistencia vectorial: ⬜.
+
 El Execution Audit Trail interno está implementado y validado; no implica persistencia, UI, métricas ni una API pública de audit.
 
 > Kai Planner Orchestration v1 y Architecture / Composition Cleanup: implementados y validados localmente.

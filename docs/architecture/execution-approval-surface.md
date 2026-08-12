@@ -1,5 +1,7 @@
 # Execution Approval Surface
 
+El pending snapshot conserva el `ExecutionAuditContext` del Plan para correlacionar creación, decisión y ejecución sin incluir el snapshot ni argumentos en eventos de audit.
+
 Kai puede propagar `PendingExecutionId` y la confirmation pública, pero no puede aprobar ni ejecutar el pending aprobado.
 
 La confirmación humana es una operación independiente de ejecutar una Tool.

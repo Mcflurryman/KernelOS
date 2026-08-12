@@ -1,5 +1,7 @@
 # Product Roadmap
 
+Existe una traza interna de ejecución para observabilidad de dominio; no es una feature visible, persistente ni accesible por endpoint.
+
 > Kai puede iniciar acciones explícitas bajo policy y devolver confirmación pendiente. No hay auto-approval, agent loop, scheduler, memoria persistente, navegador, Spotify, Maps, trading ni coding agent.
 
 Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado / reservado.
@@ -22,7 +24,8 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Exigir confirmación one-shot para Tools declaradas con efectos laterales: ✅ (Core; sin UI de confirmación)
 - Confirmar o rechazar acciones sensibles mediante API y ejecutar el snapshot aprobado: ✅ (sin integración Kai ni UI)
 - Autorizar un plan multi-task completo antes de cualquier Tool: ✅ (sin rollback de efectos externos)
-- Kai Agent Core v1 para Chat/RAG; modo Planner todavía no disponible: ✅
+- Kai Agent Core v1 para Chat/RAG y Planner explícito: ✅
+- Trazabilidad interna de decisiones y ejecuciones: ✅ (sin endpoint, UI ni persistencia)
 - Usar contexto recuperado, recordar conversaciones y responder con fuentes: ⬜
 - Recordar conversaciones entre sesiones o que Kai recuerde todo lo hablado: ⬜
 - Kai Agent autónomo: ⚪

@@ -1,6 +1,8 @@
 using System.Text.Json;
 using KernelOS.Core;
+using KernelOS.Core.Audit;
 using KernelOS.Core.Execution;
+using KernelOS.Infrastructure.Execution;
 using KernelOS.Core.Planning;
 using KernelOS.Tools;
 
@@ -12,7 +14,7 @@ public sealed class KernelPlanner(IPlanBuilder builder) : IPlanner
         builder.BuildAsync(goal, cancellationToken);
 }
 
-public sealed class PlanBuilder : IPlanBuilder
+public sealed class PlanBuilder(IExecutionAuditWriter? audit = null, TimeProvider? timeProvider = null) : IPlanBuilder
 {
     public Task<PlannerResult> BuildAsync(Goal goal, CancellationToken cancellationToken = default)
     {
@@ -31,7 +33,16 @@ public sealed class PlanBuilder : IPlanBuilder
             return Task.FromResult(new PlannerResult(PlannerStatus.Failed, null, new("unsupported_goal", "The goal cannot be planned.")));
         }
 
-        return Task.FromResult(new PlannerResult(PlannerStatus.Planned, new Plan(Guid.NewGuid(), goal.Id, [task], PlannerStatus.Planned, null, null)));
+        var auditContext = goal.AuditContext ?? new ExecutionAuditContext(AuditFlowId.Create(), ExecutionOrigin.Planner);
+        var plan = new Plan(Guid.NewGuid(), goal.Id, [task], PlannerStatus.Planned, null, null, auditContext);
+        _ = audit?.WriteAsync(new AuditEvent(
+                auditContext.FlowId,
+                (timeProvider ?? TimeProvider.System).GetUtcNow(),
+                AuditEventType.PlanCreated,
+                plan.Id,
+                Origin: auditContext.Origin,
+                Status: PlannerStatus.Planned.ToString()), CancellationToken.None);
+        return Task.FromResult(new PlannerResult(PlannerStatus.Planned, plan));
     }
 
     private static bool TryCreateTask(Goal goal, out PlanTask task)
@@ -81,12 +92,16 @@ public sealed class PlanExecutor : IPlanExecutor
     {
     }
 
-    public PlanExecutor(IExecutionPreflight preflight, IExecutionGate executionGate, IToolRouter toolRouter)
+    public PlanExecutor(IExecutionPreflight preflight, IExecutionGate executionGate, IToolRouter toolRouter, IExecutionAuditWriter? audit = null, TimeProvider? timeProvider = null)
     {
         this.preflight = preflight;
         this.executionGate = executionGate;
         this.toolRouter = toolRouter;
+        this.audit = audit;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
     }
+    private readonly IExecutionAuditWriter? audit;
+    private readonly TimeProvider timeProvider;
     public async Task<PlannerResult> ExecuteAsync(
         Plan plan,
         IReadOnlyDictionary<Guid, Guid>? approvalIds = null,
@@ -132,6 +147,8 @@ public sealed class PlanExecutor : IPlanExecutor
                 new(errorCode, status.ToString()));
         }
 
+        var context = plan.AuditContext;
+
         // Consume every scoped approval before the first Tool call, preventing partial execution on a race.
         foreach (var task in tasks)
         {
@@ -152,16 +169,22 @@ public sealed class PlanExecutor : IPlanExecutor
             }
         }
 
+        var executionTimestamp = timeProvider.GetTimestamp();
+        Write(AuditEventType.PlanExecutionStarted, plan, context, cancellationToken: CancellationToken.None);
+
         for (var taskIndex = 0; taskIndex < tasks.Count; taskIndex++)
         {
             var task = tasks[taskIndex];
             if (cancellationToken.IsCancellationRequested)
             {
+                Write(AuditEventType.PlanExecutionCancelled, plan, context, duration: timeProvider.GetElapsedTime(executionTimestamp), cancellationToken: CancellationToken.None);
                 return new(PlannerStatus.Cancelled, Cancel(plan, tasks, startedAt));
             }
 
+            var taskTimestamp = timeProvider.GetTimestamp();
             try
             {
+                Write(AuditEventType.TaskExecutionStarted, plan, context, task, cancellationToken: CancellationToken.None);
                 var result = await toolRouter.ExecuteAsync(
                     new ToolExecutionRequest(task.ToolName, task.Arguments),
                     cancellationToken);
@@ -171,11 +194,14 @@ public sealed class PlanExecutor : IPlanExecutor
                         ? PlannerStatus.Cancelled
                         : PlannerStatus.Failed;
                 tasks[taskIndex] = task with { Status = status, Result = result };
+                var taskEvent = status == PlannerStatus.Completed ? AuditEventType.TaskExecutionCompleted : status == PlannerStatus.Cancelled ? AuditEventType.TaskExecutionCancelled : AuditEventType.TaskExecutionFailed;
+                Write(taskEvent, plan, context, task, timeProvider.GetElapsedTime(taskTimestamp), CancellationToken.None);
                 if (status != PlannerStatus.Completed)
                 {
                     var error = status == PlannerStatus.Failed
                         ? new PlannerError("tool_failed", "The planned task did not complete.")
                         : null;
+                    Write(status == PlannerStatus.Cancelled ? AuditEventType.PlanExecutionCancelled : AuditEventType.PlanExecutionFailed, plan, context, duration: timeProvider.GetElapsedTime(executionTimestamp), cancellationToken: CancellationToken.None);
                     return new(
                         status,
                         plan with
@@ -190,10 +216,14 @@ public sealed class PlanExecutor : IPlanExecutor
             }
             catch (OperationCanceledException)
             {
+                Write(AuditEventType.TaskExecutionCancelled, plan, context, task, timeProvider.GetElapsedTime(taskTimestamp), CancellationToken.None);
+                Write(AuditEventType.PlanExecutionCancelled, plan, context, duration: timeProvider.GetElapsedTime(executionTimestamp), cancellationToken: CancellationToken.None);
                 return new(PlannerStatus.Cancelled, Cancel(plan, tasks, startedAt));
             }
             catch
             {
+                Write(AuditEventType.TaskExecutionFailed, plan, context, task, timeProvider.GetElapsedTime(taskTimestamp), CancellationToken.None);
+                Write(AuditEventType.PlanExecutionFailed, plan, context, duration: timeProvider.GetElapsedTime(executionTimestamp), cancellationToken: CancellationToken.None);
                 return new(
                     PlannerStatus.Failed,
                     plan with
@@ -207,6 +237,7 @@ public sealed class PlanExecutor : IPlanExecutor
             }
         }
 
+        Write(AuditEventType.PlanExecutionCompleted, plan, context, duration: timeProvider.GetElapsedTime(executionTimestamp), cancellationToken: CancellationToken.None);
         return new(
             PlannerStatus.Completed,
             plan with
@@ -243,4 +274,10 @@ public sealed class PlanExecutor : IPlanExecutor
             StartedAt = startedAt,
             FinishedAt = DateTimeOffset.UtcNow
         };
+
+    private void Write(AuditEventType eventType, Plan plan, ExecutionAuditContext? context, PlanTask? task = null, TimeSpan? duration = null, CancellationToken cancellationToken = default)
+    {
+        if (context is not null)
+            _ = audit?.WriteAsync(new AuditEvent(context.FlowId, timeProvider.GetUtcNow(), eventType, plan.Id, task?.Id, Origin: context.Origin, Duration: duration), cancellationToken);
+    }
 }

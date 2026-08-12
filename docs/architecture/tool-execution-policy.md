@@ -1,5 +1,7 @@
 # Tool Confirmation & Execution Policy
 
+Cuando una ejecución directa llega a `Allow`, el gateway emite un flow de audit interno sin argumentos, rutas ni resultados. Los bloqueos de policy no se registran como ejecución. No existe aún evento terminal directo de cancelación, por lo que un resultado cancelado conserva el comportamiento funcional sin inventar un fallo de audit.
+
 Kai respeta la policy: no autoaprueba, no accede al router y detiene los side effects en `RequiresConfirmation`.
 
 La autorización es una frontera independiente entre construir un plan y ejecutar una Tool:

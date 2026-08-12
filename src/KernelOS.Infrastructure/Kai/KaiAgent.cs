@@ -1,10 +1,12 @@
 using System.Text.Json;
 using KernelOS.Core;
+using KernelOS.Core.Audit;
 using KernelOS.Core.Conversation;
 using KernelOS.Core.Execution;
 using KernelOS.Core.Kai;
 using KernelOS.Core.Planning;
 using KernelOS.Core.Rag;
+using KernelOS.Infrastructure.Execution;
 using Microsoft.Extensions.Options;
 
 namespace KernelOS.Infrastructure.Kai;
@@ -17,12 +19,17 @@ public sealed class KaiAgent(
     IPlanner planner,
     IPlanExecutor executor,
     IExecutionConfirmationService confirmations,
-    IOptions<KaiOptions> options) : IKaiAgent
+    IOptions<KaiOptions> options,
+    IExecutionAuditWriter? audit = null,
+    TimeProvider? timeProvider = null) : IKaiAgent
 {
     private readonly KaiOptions options = options.Value;
 
     public async Task<KaiResponse> HandleAsync(KaiRequest request, CancellationToken cancellationToken = default)
     {
+        var auditContext = new ExecutionAuditContext(AuditFlowId.Create(), ExecutionOrigin.Kai);
+        var clock = timeProvider ?? TimeProvider.System;
+        _ = audit?.WriteAsync(new AuditEvent(auditContext.FlowId, clock.GetUtcNow(), AuditEventType.KaiRequestStarted, Origin: auditContext.Origin), CancellationToken.None);
         if (cancellationToken.IsCancellationRequested) return new(KaiStatus.Cancelled, KaiMode.Auto);
         if (string.IsNullOrWhiteSpace(request.Message) || request.Message.Length > options.MaxMessageCharacters || !Enum.IsDefined(request.PreferredMode)) return new(KaiStatus.InvalidRequest, KaiMode.Auto);
 
@@ -33,20 +40,21 @@ public sealed class KaiAgent(
         var decision = request.PreferredMode == KaiMode.Auto && !string.IsNullOrWhiteSpace(request.ToolName)
             ? new KaiDecision(KaiMode.Planner, "EXPLICIT_ACTION")
             : router.Route(request.Message, request.PreferredMode);
+        _ = audit?.WriteAsync(new AuditEvent(auditContext.FlowId, clock.GetUtcNow(), AuditEventType.KaiRouteSelected, Origin: auditContext.Origin, Status: decision.Mode.ToString()), CancellationToken.None);
 
         return decision.Mode switch
         {
-            KaiMode.Planner => await PlanAsync(request, decision, cancellationToken),
+            KaiMode.Planner => await PlanAsync(request, decision, auditContext, cancellationToken),
             KaiMode.Rag => await RagAsync(request, decision, cancellationToken),
             _ => await ChatAsync(request, decision, cancellationToken)
         };
     }
 
-    private async Task<KaiResponse> PlanAsync(KaiRequest request, KaiDecision decision, CancellationToken cancellationToken)
+    private async Task<KaiResponse> PlanAsync(KaiRequest request, KaiDecision decision, ExecutionAuditContext context, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.ToolName)) return new(KaiStatus.PlanningFailed, KaiMode.Planner, Warnings: [new("KAI_PLANNER_INPUT_REQUIRED", "An explicit supported tool is required.")], Decision: decision);
         var metadata = new Dictionary<string, JsonElement> { ["tool"] = JsonSerializer.SerializeToElement(request.ToolName), ["arguments"] = JsonSerializer.SerializeToElement(request.Arguments ?? new Dictionary<string, JsonElement>()) };
-        var built = await planner.PlanAsync(new Goal(Guid.NewGuid(), "EJECUTAR", DateTimeOffset.UtcNow, 0, metadata), cancellationToken);
+        var built = await planner.PlanAsync(new Goal(Guid.NewGuid(), "EJECUTAR", DateTimeOffset.UtcNow, 0, metadata, context), cancellationToken);
         if (built.Status != PlannerStatus.Planned || built.Plan is null) return new(built.Status == PlannerStatus.Cancelled ? KaiStatus.Cancelled : KaiStatus.PlanningFailed, KaiMode.Planner, Decision: decision);
 
         var execution = await executor.ExecuteAsync(built.Plan, null, cancellationToken);

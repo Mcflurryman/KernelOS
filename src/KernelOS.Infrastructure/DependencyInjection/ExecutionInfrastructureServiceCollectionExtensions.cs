@@ -1,3 +1,4 @@
+using KernelOS.Core.Audit;
 using KernelOS.Core.Execution;
 using KernelOS.Infrastructure.Execution;
 using Microsoft.Extensions.Configuration;
@@ -16,6 +17,11 @@ internal static class ExecutionInfrastructureServiceCollectionExtensions
                 "ExecutionPolicy:ApprovalTtlMinutes must be greater than zero.")
             .ValidateOnStart();
 
+        services.AddOptions<ExecutionAuditOptions>()
+            .Bind(configuration.GetSection(ExecutionAuditOptions.SectionName))
+            .Validate(options => options.MaxEvents > 0, "ExecutionAudit:MaxEvents must be greater than zero.")
+            .ValidateOnStart();
+
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IExecutionPolicy, DefaultExecutionPolicy>();
         services.AddSingleton<IExecutionApprovalStore, InMemoryExecutionApprovalStore>();
@@ -23,6 +29,8 @@ internal static class ExecutionInfrastructureServiceCollectionExtensions
         services.AddSingleton<IExecutionConfirmationService, ExecutionConfirmationService>();
         services.AddSingleton<IExecutionGate, ExecutionGate>();
         services.AddSingleton<IExecutionPreflight, ExecutionPreflight>();
+        services.AddSingleton<IExecutionAuditTrail, InMemoryExecutionAuditTrail>();
+        services.AddSingleton<IExecutionAuditWriter, SafeExecutionAuditWriter>();
 
         return services;
     }

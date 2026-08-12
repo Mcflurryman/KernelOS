@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Execution Audit Trail interno: correlación por flow, eventos estructurados y privados, store in-memory bounded y escritura fail-open; sin endpoint público ni persistencia.
+- ADR 0029 y documentación de arquitectura del Audit Trail.
+
 - Multi-task Authorization Preflight: autorización global previa a cualquier Tool, pending único con snapshot completo y approvals one-shot scoped por tarea.
 - ADR 0028 y documentación de seguridad, concurrencia, TTL y límites de ejecución multi-task.
 - Kai Planner Orchestration v1 y endpoint `POST /kai` para planificación explícita y ejecución segura.

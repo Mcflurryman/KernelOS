@@ -1,5 +1,7 @@
 # Architecture Roadmap
 
+El Execution Audit Trail interno está implementado y validado; no implica persistencia, UI, métricas ni una API pública de audit.
+
 > Kai Planner Orchestration v1 y Architecture / Composition Cleanup: implementados y validados localmente.
 
 Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado / reservado.
@@ -60,6 +62,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Execution Approval / Confirmation Surface: ✅
 - Multi-task Authorization Preflight: ✅
 - Kai Planner Orchestration: ✅
+- Execution Audit Trail interno: ✅
 - Task Executor, Scheduler, trabajos en segundo plano y notificaciones: ⚪
 - Políticas de permisos y confirmaciones para acciones sensibles: ⚪
 

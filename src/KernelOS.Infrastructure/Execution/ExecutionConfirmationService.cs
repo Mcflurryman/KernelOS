@@ -1,4 +1,5 @@
 using KernelOS.Core.Execution;
+using KernelOS.Core.Audit;
 using KernelOS.Core.Planning;
 using KernelOS.Tools;
 
@@ -10,7 +11,8 @@ public sealed class ExecutionConfirmationService(
     IExecutionPendingStore pendingStore,
     IToolRegistry tools,
     TimeProvider timeProvider,
-    Microsoft.Extensions.Options.IOptions<ExecutionPolicyOptions> options) : IExecutionConfirmationService
+    Microsoft.Extensions.Options.IOptions<ExecutionPolicyOptions> options,
+    IExecutionAuditWriter? audit = null) : IExecutionConfirmationService
 {
     private readonly TimeSpan ttl = TimeSpan.FromMinutes(options.Value.ApprovalTtlMinutes);
 
@@ -62,6 +64,8 @@ public sealed class ExecutionConfirmationService(
             plan.Tasks.Count);
         var snapshot = Snapshot(plan);
         await pendingStore.CreateAsync(new PendingExecution(id, snapshot, representative.Task.Id, request, expiresAt, PendingExecutionStatus.PendingConfirmation), cancellationToken);
+        if (snapshot.AuditContext is not null)
+            _ = audit?.WriteAsync(new AuditEvent(snapshot.AuditContext.FlowId, timeProvider.GetUtcNow(), AuditEventType.PendingExecutionCreated, snapshot.Id, PendingExecutionId: id, Origin: snapshot.AuditContext.Origin, Status: PendingExecutionStatus.PendingConfirmation.ToString(), Risk: risk, ReasonCode: representative.Decision.Reason.ToString()), CancellationToken.None);
         return new(PendingExecutionStatus.PendingConfirmation, request);
     }
 
@@ -78,9 +82,13 @@ public sealed class ExecutionConfirmationService(
         if (decision == ExecutionConfirmationDecision.Reject)
         {
             var rejected = pending with { Status = PendingExecutionStatus.Rejected };
-            return await pendingStore.TryTransitionAsync(pending.Id, PendingExecutionStatus.PendingConfirmation, rejected, cancellationToken)
-                ? new(PendingExecutionStatus.Rejected, pending.Confirmation)
-                : await GetAsync(pendingExecutionId, cancellationToken);
+            if (await pendingStore.TryTransitionAsync(pending.Id, PendingExecutionStatus.PendingConfirmation, rejected, cancellationToken))
+            {
+                if (pending.Plan.AuditContext is not null)
+                    _ = audit?.WriteAsync(new AuditEvent(pending.Plan.AuditContext.FlowId, timeProvider.GetUtcNow(), AuditEventType.ExecutionRejected, pending.Plan.Id, PendingExecutionId: pending.Id, Origin: pending.Plan.AuditContext.Origin, Status: PendingExecutionStatus.Rejected.ToString()), CancellationToken.None);
+                return new(PendingExecutionStatus.Rejected, pending.Confirmation);
+            }
+            return await GetAsync(pendingExecutionId, cancellationToken);
         }
 
         var approving = pending with { Status = PendingExecutionStatus.Executing };
@@ -110,6 +118,8 @@ public sealed class ExecutionConfirmationService(
             ApprovalIds = approvalIds
         };
         await pendingStore.TryTransitionAsync(pending.Id, PendingExecutionStatus.Executing, approved, cancellationToken);
+        if (pending.Plan.AuditContext is not null)
+            _ = audit?.WriteAsync(new AuditEvent(pending.Plan.AuditContext.FlowId, timeProvider.GetUtcNow(), AuditEventType.ExecutionApproved, pending.Plan.Id, PendingExecutionId: pending.Id, ApprovalId: approved.ApprovalId, Origin: pending.Plan.AuditContext.Origin, Status: PendingExecutionStatus.Approved.ToString()), CancellationToken.None);
         return new(PendingExecutionStatus.Approved, pending.Confirmation, approved.ApprovalId);
     }
 

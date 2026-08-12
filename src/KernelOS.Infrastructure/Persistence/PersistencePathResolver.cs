@@ -4,6 +4,8 @@ namespace KernelOS.Infrastructure.Persistence;
 
 public sealed class PersistencePathResolver(IOptions<PersistenceOptions> options)
 {
+    private static readonly char[] DirectorySeparators = ['/', '\\'];
+
     public string DataDirectory { get; } = ResolveDirectory(options.Value.DataDirectory);
     public string DatabasePath { get; } = ResolveDatabasePath(ResolveDirectory(options.Value.DataDirectory), options.Value.DatabaseFile);
 
@@ -11,8 +13,7 @@ public sealed class PersistencePathResolver(IOptions<PersistenceOptions> options
         !string.IsNullOrWhiteSpace(file)
         && !Path.IsPathRooted(file)
         && !file.Contains("..", StringComparison.Ordinal)
-        && !file.Contains(Path.DirectorySeparatorChar)
-        && !file.Contains(Path.AltDirectorySeparatorChar)
+        && file.IndexOfAny(DirectorySeparators) < 0
         && file.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
 
     private static string ResolveDirectory(string? configured) => string.IsNullOrWhiteSpace(configured)

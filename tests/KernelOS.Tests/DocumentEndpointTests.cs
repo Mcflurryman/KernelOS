@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace KernelOS.Tests;
 
-public sealed class DocumentEndpointTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public sealed class DocumentEndpointTests(TestApplicationFactory factory) : IClassFixture<TestApplicationFactory>
 {
     [Theory]
     [InlineData("text/sample.txt")]

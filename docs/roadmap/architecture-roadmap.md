@@ -29,9 +29,9 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 
 - Document Readers para TXT, Markdown, JSON y CSV: ✅
 - Knowledge Core determinista: ✅
-- Memory Core In-Memory: ✅
+- Persistence Foundation para Memory durable local: ✅
 - PDF, DOCX, XLSX y OCR: ⬜
-- Persistencia e historial de Memory: ⬜
+- Historial de versiones de Memory: ⬜
 
 ## Fase 4 — Retrieval
 
@@ -40,6 +40,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Search Engine Core léxico determinista: ✅
 - Embeddings Core y Ollama Embeddings Provider local: ✅
 - Vector Index: ✅
+- Persistencia de Vector Index, embeddings y pipeline de reindexado desde Memory durable: ⬜
 - Semantic Search: ✅
 - Hybrid Search: ✅
 

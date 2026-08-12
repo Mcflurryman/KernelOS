@@ -10,7 +10,7 @@ La modularización no modifica rutas, verbos, payloads ni mappings de estado. La
 
 ## Infrastructure modular
 
-`services.AddInfrastructure(configuration)` permanece como la única fachada pública para consumidores. Internamente coordina módulos por dominio para Chat, Execution, Planning, Filesystem, Documents, Knowledge, Memory, Retrieval, Context, RAG, Conversation, Kai y Embeddings.
+`services.AddInfrastructure(configuration)` permanece como la única fachada pública para consumidores. Internamente coordina módulos por dominio para Chat, Execution, Planning, Filesystem, Documents, Knowledge, Persistence, Memory, Retrieval, Context, RAG, Conversation, Kai y Embeddings.
 
 Cada módulo conserva sus Options, validaciones, valores por defecto, lifetimes y registros existentes. Los clientes HTTP de Ollama se configuran mediante `IHttpClientFactory`; la generación de embeddings sigue registrándose únicamente cuando el provider configurado es `ollama`.
 

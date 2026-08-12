@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace KernelOS.Tests;
 
-public sealed class PlannerEndpointTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public sealed class PlannerEndpointTests(TestApplicationFactory factory) : IClassFixture<TestApplicationFactory>
 {
     [Fact]
     public async Task PostPlannerExecuteUsesExplicitExecutor()

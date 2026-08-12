@@ -8,9 +8,9 @@ KernelOS es una plataforma personal de IA local. Kai es el asistente previsto so
 
 ## Estado actual
 
-Están implementados chat local mediante Ollama, Tool System, Planner determinista con planificación, autorización y ejecución separadas, Filesystem Capability Read Only, Document Readers (TXT, Markdown, JSON y CSV), Knowledge Core, Memory Core In-Memory, retrieval interno, Context Builder, RAG Pipeline, Conversation Context Core y Kai Agent Core v1. Conversation Context recibe historial reciente del caller, selecciona por presupuesto y mantiene separado el mensaje actual.
+Están implementados chat local mediante Ollama, Tool System, Planner determinista con planificación, autorización y ejecución separadas, Filesystem Capability Read Only, Document Readers (TXT, Markdown, JSON y CSV), Knowledge Core y Memory durable local en SQLite, retrieval interno, Context Builder, RAG Pipeline, Conversation Context Core y Kai Agent Core v1. Conversation Context recibe historial reciente del caller, selecciona por presupuesto y mantiene separado el mensaje actual.
 
-Siguen pendientes la persistencia de conversaciones entre sesiones y experiencia pública de preguntas sobre documentos. La construcción de un plan no ejecuta Tools; las acciones con efectos laterales requieren aprobaciones de un solo uso, ligadas a plan, tarea y fingerprint, creadas mediante confirmación API explícita sobre un snapshot. La ejecución es secuencial y no hace rollback de efectos externos. Conversation Context no es una memoria conversacional persistente. Tampoco existen Scheduler, automatización de Windows, MCP, integraciones de correo/calendario, OCR, voz o UI.
+Siguen pendientes la persistencia de conversaciones entre sesiones y experiencia pública de preguntas sobre documentos. La construcción de un plan no ejecuta Tools; las acciones con efectos laterales requieren aprobaciones de un solo uso, ligadas a plan, tarea y fingerprint, creadas mediante confirmación API explícita sobre un snapshot. La ejecución es secuencial y no hace rollback de efectos externos. Approvals, pending executions y Audit Trail siguen en memoria; Conversation Context no es una memoria conversacional persistente. Tampoco existen Scheduler, automatización de Windows, MCP, integraciones de correo/calendario, OCR, voz o UI.
 
 ## Requisitos y ejecución
 
@@ -35,11 +35,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 - Los documentos se tratan como datos no confiables. No se ejecutan instrucciones, macros ni contenido activo.
 - El contenido y los modelos se procesan localmente por la configuración actual. Cualquier proveedor remoto futuro requerirá una decisión explícita.
 - No hay operaciones de escritura, endpoints de Knowledge/Search/Embeddings ni Tools públicas para esos componentes internos.
+- Memory usa SQLite local; Vector Index y embeddings continúan en memoria y no se persisten con Memory. La configuración, migraciones y límites de seguridad se describen en la arquitectura de persistencia.
 
 ## Documentación
 
 - [Visión del proyecto](PROJECT.md)
 - [Arquitectura actual](docs/architecture/overview.md)
+- [Persistence Foundation](docs/architecture/persistence-foundation.md)
 - [Execution Audit Trail](docs/architecture/execution-audit-trail.md)
 - [Roadmap](docs/roadmap/roadmap.md)
 - [Decisiones arquitectónicas](docs/decisions/)

@@ -4,9 +4,11 @@ using System.Text;
 using System.Text.Json;
 using KernelOS.Core;
 using KernelOS.Infrastructure;
+using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -162,6 +164,7 @@ public sealed class OllamaChatModelTests
 public sealed class TestApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly bool isOllamaAvailable;
+    private readonly string persistenceDirectory = Path.Combine(Path.GetTempPath(), "KernelOS.Tests", Guid.NewGuid().ToString("N"));
 
     public TestApplicationFactory()
         : this(true)
@@ -176,6 +179,11 @@ public sealed class TestApplicationFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        builder.ConfigureAppConfiguration(configuration => configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Persistence:DataDirectory"] = persistenceDirectory,
+            ["Persistence:DatabaseFile"] = "kernelos.db"
+        }));
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IChatModel>();
@@ -183,6 +191,13 @@ public sealed class TestApplicationFactory : WebApplicationFactory<Program>
             services.AddSingleton<IChatModel>(new FakeChatModel());
             services.AddSingleton<IOllamaHealthCheck>(new FakeOllamaHealthCheck(isOllamaAvailable));
         });
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        SqliteConnection.ClearAllPools();
+        if (Directory.Exists(persistenceDirectory)) Directory.Delete(persistenceDirectory, recursive: true);
     }
 }
 

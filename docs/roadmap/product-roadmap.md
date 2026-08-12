@@ -2,20 +2,20 @@
 
 Existe una traza interna de ejecución para observabilidad de dominio; no es una feature visible, persistente ni accesible por endpoint.
 
-> Kai puede iniciar acciones explícitas bajo policy y devolver confirmación pendiente. No hay auto-approval, agent loop, scheduler, memoria persistente, navegador, Spotify, Maps, trading ni coding agent.
+> Kai puede iniciar acciones explícitas bajo policy y devolver confirmación pendiente. No hay auto-approval, agent loop, scheduler, memoria conversacional persistente, navegador, Spotify, Maps, trading ni coding agent.
 
 Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado / reservado.
 
 ## Knowledge
 
 - Leer documentos TXT, Markdown, JSON y CSV dentro de raíces autorizadas: ✅
-- Transformar documentos leídos en Knowledge y conservarlo en memoria de proceso: ✅ (interno; sin endpoint de Knowledge/Memory)
+- Transformar documentos leídos en Knowledge y conservarlo de forma durable en SQLite local: ✅ (interno; sin endpoint de Knowledge/Memory)
 - Buscar conocimiento por coincidencia exacta, tokens y prefijos: ✅ (interno; no es búsqueda semántica)
 - Buscar documentos por significado y combinar resultados: ✅ (interno; sin endpoint, Tool ni RAG)
 - Preparar contexto y citas seguras desde resultados recuperados: ✅ (interno; consumido por RAG interno)
 - RAG interno basado en contexto recuperado: ✅ (sin endpoint ni Kai Agent)
 - Contexto conversacional reciente por request: ✅ (interno; sin persistencia)
-- Recordar conocimiento tras reiniciar: ⬜
+- Recordar conocimiento tras reiniciar: ✅ (Memory durable; Vector Index y embeddings se reconstruirán en un milestone futuro)
 
 ## Assistant
 

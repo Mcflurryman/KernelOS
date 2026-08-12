@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 namespace KernelOS.Tests;
-public sealed class FilesystemEndpointTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public sealed class FilesystemEndpointTests(TestApplicationFactory factory) : IClassFixture<TestApplicationFactory>
 {
  [Fact] public async Task InvalidFilesystemOperationReturnsBadRequest(){using var r=await factory.CreateClient().PostAsync("/filesystem/invalid",JsonContent.Create(new{arguments=new{path="Workspace"}}));Assert.Equal(HttpStatusCode.BadRequest,r.StatusCode);}
  [Fact] public async Task FilesystemOperationDoesNotRequireOperationInBody(){using var r=await factory.CreateClient().PostAsync("/filesystem/exists",JsonContent.Create(new{arguments=new{path="Workspace/testdata/filesystem/sample.cs"}}));Assert.Equal(HttpStatusCode.OK,r.StatusCode);}

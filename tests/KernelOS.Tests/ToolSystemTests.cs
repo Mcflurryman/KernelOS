@@ -132,8 +132,8 @@ public sealed class ToolExecutionTests
 }
 
 [Collection("Side effect tool tests")]
-public sealed class ToolEndpointTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public sealed class ToolEndpointTests(TestApplicationFactory factory)
+    : IClassFixture<TestApplicationFactory>
 {
     [Fact]
     public async Task GetToolsReturnsRegisteredTools()

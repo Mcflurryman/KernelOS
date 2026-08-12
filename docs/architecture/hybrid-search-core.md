@@ -1,6 +1,6 @@
 # Hybrid Search Core
 
-Hybrid Search combina resultados léxicos y semánticos sin modificar sus motores. Recibe una query, la entrega al único `IEmbeddingGenerator` registrado y consulta `ISearchEngine` e `ISemanticSearchEngine` con el mismo presupuesto de candidatos. No genera ni persiste conocimiento y no construye contexto.
+Hybrid Search combina resultados léxicos y semánticos sin modificar sus motores. Recibe una query, la entrega al único `IEmbeddingGenerator` registrado y consulta `ISearchEngine` e `ISemanticSearchEngine` con el mismo presupuesto de candidatos. No genera ni persiste conocimiento y no construye contexto. Memory durable no vuelve durable Vector Index ni embeddings.
 
 Los resultados se fusionan por `MemoryItemId`; un resultado semántico sin esa referencia conserva como identidad su `VectorRecordId`. El score es la suma ponderada de score léxico normalizado y score semántico, con pesos normalizados para permitir configuración no unitaria. El orden es score híbrido descendente, score semántico descendente, score léxico descendente e ID ascendente.
 

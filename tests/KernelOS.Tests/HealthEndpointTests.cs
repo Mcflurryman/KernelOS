@@ -8,8 +8,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace KernelOS.Tests;
 
-public sealed class HealthEndpointTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public sealed class HealthEndpointTests(TestApplicationFactory factory)
+    : IClassFixture<TestApplicationFactory>
 {
     [Fact]
     public async Task GetHealthReturnsOk()

@@ -17,7 +17,7 @@ internal static class MemoryInfrastructureServiceCollectionExtensions
                     && options.MaxQueryResults > 0,
                 "Memory options are invalid.")
             .ValidateOnStart();
-        services.AddSingleton<IMemoryStore, InMemoryMemoryStore>();
+        services.AddSingleton<IMemoryStore, SqliteMemoryStore>();
 
         return services;
     }

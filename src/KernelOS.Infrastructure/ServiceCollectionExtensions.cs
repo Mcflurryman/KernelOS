@@ -17,6 +17,7 @@ public static class ServiceCollectionExtensions
             .AddFilesystemInfrastructure(configuration)
             .AddDocumentInfrastructure(configuration)
             .AddKnowledgeInfrastructure(configuration)
+            .AddPersistenceInfrastructure(configuration)
             .AddMemoryInfrastructure(configuration)
             .AddRetrievalInfrastructure(configuration)
             .AddContextInfrastructure(configuration)

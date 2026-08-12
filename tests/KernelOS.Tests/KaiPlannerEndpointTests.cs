@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace KernelOS.Tests;
 
 [Collection("Side effect tool tests")]
-public sealed class KaiPlannerEndpointTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public sealed class KaiPlannerEndpointTests(TestApplicationFactory factory) : IClassFixture<TestApplicationFactory>
 {
     [Fact]
     public async Task PostKaiExecutesExplicitReadOnlyPlannerAction()

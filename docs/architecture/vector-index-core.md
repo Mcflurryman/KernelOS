@@ -6,4 +6,4 @@ Vector Index Core almacena `EmbeddingVector` ya generados junto a referencias po
 
 Las escrituras usan una compuerta para mantener coherentes el almacén principal y la identidad secundaria. Get y Query devuelven snapshots con metadata copiada; la enumeración concurrente es segura, no una transacción global. Contains y Count lanzan cancelación porque sus retornos simples no llevan estado; las demás operaciones devuelven `Cancelled`.
 
-No hay persistencia, Vector Index remoto, ANN, similitud, Semantic Search, Hybrid Search, RAG, endpoint ni Tool. Un índice persistente futuro podrá implementar `IVectorIndex` y Semantic Search deberá elegir una única familia compatible antes de comparar vectores.
+Vector Index sigue in-memory y derivado: Persistence Foundation no hace durables vector records ni embeddings. Un futuro milestone podrá reconstruir o reindexar el índice desde Memory durable y, si procede, implementar un `IVectorIndex` persistente. No hay Vector Index remoto, ANN, endpoint ni Tool.

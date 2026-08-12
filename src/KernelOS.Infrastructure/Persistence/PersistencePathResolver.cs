@@ -12,9 +12,16 @@ public sealed class PersistencePathResolver(IOptions<PersistenceOptions> options
     public static bool IsValidDatabaseFile(string? file) =>
         !string.IsNullOrWhiteSpace(file)
         && !Path.IsPathRooted(file)
+        && file is not "." and not ".."
         && !file.Contains("..", StringComparison.Ordinal)
         && file.IndexOfAny(DirectorySeparators) < 0
-        && file.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
+        && file.All(IsPortableFileNameCharacter);
+
+    private static bool IsPortableFileNameCharacter(char character) =>
+        character is >= 'A' and <= 'Z'
+        or >= 'a' and <= 'z'
+        or >= '0' and <= '9'
+        or '.' or '-' or '_';
 
     private static string ResolveDirectory(string? configured) => string.IsNullOrWhiteSpace(configured)
         ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "KernelOS")

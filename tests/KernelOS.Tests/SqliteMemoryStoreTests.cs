@@ -48,6 +48,10 @@ public sealed class SqliteMemoryStoreTests
     [InlineData("nested\\kernelos.db")]
     [InlineData("/absolute/kernelos.db")]
     [InlineData("C:\\temp\\kernelos.db")]
+    [InlineData("C:kernelos.db")]
+    [InlineData(":")]
+    [InlineData(".")]
+    [InlineData("..")]
     public void PathResolverRejectsUnsafeDatabaseFileNames(string databaseFile)
     {
         Assert.Throws<OptionsValidationException>(() => new PersistencePathResolver(Options.Create(new PersistenceOptions { DatabaseFile = databaseFile })));
@@ -57,6 +61,7 @@ public sealed class SqliteMemoryStoreTests
     [InlineData("kernelos.db")]
     [InlineData("memory.sqlite")]
     [InlineData("kernel-os.db")]
+    [InlineData("kernel_os.db")]
     public void PathResolverAcceptsSimpleDatabaseFileNames(string databaseFile)
     {
         var resolver = new PersistencePathResolver(Options.Create(new PersistenceOptions { DataDirectory = Path.GetTempPath(), DatabaseFile = databaseFile }));

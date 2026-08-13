@@ -3,8 +3,9 @@
 ## Actualización de Retrieval
 
 - Semantic Index Rebuild Foundation desde Memory durable: ✅ (rebuild explícito y atómico por familia; vectors y embeddings siguen volátiles).
+- Semantic Index Maintenance Foundation: ✅ (sync incremental interno, eventual y fail-open; `Dirty` recupera mediante rebuild explícito).
 - Hybrid Search Graceful Degradation: ✅ (fallback lexical-only o semantic-only ante fallo técnico; sin selector de provider).
-- Sync incremental, selección explícita de provider, auto-reindex de arranque y persistencia vectorial: ⬜.
+- Selección explícita de provider, auto-reindex de arranque y persistencia vectorial: ⬜.
 
 El Execution Audit Trail interno está implementado y validado; no implica persistencia, UI, métricas ni una API pública de audit.
 
@@ -46,7 +47,8 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Search Engine Core léxico determinista: ✅
 - Embeddings Core y Ollama Embeddings Provider local: ✅
 - Vector Index: ✅
-- Persistencia de Vector Index, embeddings y pipeline de reindexado desde Memory durable: ⬜
+- Rebuild explícito e incremental maintenance desde Memory durable: ✅
+- Persistencia de Vector Index y embeddings: ⬜
 - Semantic Search: ✅
 - Hybrid Search y degradación controlada: ✅
 

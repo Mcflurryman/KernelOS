@@ -1,6 +1,6 @@
 # Persistence Foundation
 
-> Memory durable puede alimentar un reindexado vectorial explícito desde snapshot, pero vectors y embeddings permanecen volátiles. Véase [Semantic Index Rebuild Foundation](semantic-index-rebuild.md).
+> Memory durable puede alimentar un rebuild y, tras commit, el mantenimiento incremental del índice vectorial; vectors y embeddings permanecen volátiles. Véanse [Semantic Index Rebuild Foundation](semantic-index-rebuild.md) y [Semantic Index Maintenance Foundation](semantic-index-maintenance.md).
 
 Memory es la fuente durable de conocimiento normalizado de KernelOS. `KnowledgeDocument` llega desde Knowledge Core y `IMemoryStore` conserva el agregado `MemoryDocument`; no se expone un endpoint ni una Tool de Memory. En la creación actual, `MemoryDocument.Id` y `MemoryDocument.KnowledgeDocumentId` son ambos `KnowledgeDocument.Id`.
 
@@ -14,7 +14,7 @@ Un hosted service inicializa la base al arrancar. Las migraciones SQL están emb
 
 ## Agregado y consultas
 
-Store, Update y Delete son transacciones atómicas del agregado completo: documento, metadata e items. Update conserva `CreatedAt`, reemplaza metadata e items e incrementa la versión; Delete usa las claves foráneas con cascade. No existe transacción conjunta entre Memory y embeddings o Vector Index.
+Store, Update y Delete son transacciones atómicas del agregado completo: documento, metadata e items. Update conserva `CreatedAt`, reemplaza metadata e items e incrementa la versión; Delete usa las claves foráneas con cascade. Tras un commit exitoso emiten la mutación durable exacta al observer interno; no existe transacción conjunta entre Memory y embeddings o Vector Index, y un fallo de ese observer no cambia el resultado de Memory.
 
 Get y Query entregan snapshots independientes. Query filtra de forma exacta por los campos de `MemoryQuery`, aplica todas las condiciones como AND, ordena por `UpdatedAt` descendente e `Id` ascendente y después aplica `Limit` y `Offset`. La igualdad de contenido, hash y metadata es sensible a mayúsculas/minúsculas.
 

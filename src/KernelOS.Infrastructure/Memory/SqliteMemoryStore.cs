@@ -8,12 +8,26 @@ using Microsoft.Extensions.Options;
 
 namespace KernelOS.Infrastructure.Memory;
 
-public sealed class SqliteMemoryStore(
-    ISqliteConnectionFactory connections,
-    IOptions<MemoryOptions> options,
-    ILogger<SqliteMemoryStore> logger) : IMemoryStore, IMemorySnapshotProvider
+public sealed class SqliteMemoryStore : IMemoryStore, IMemorySnapshotProvider, IDisposable
 {
-    private readonly MemoryOptionsSnapshot limits = new(options.Value.MaxDocuments, options.Value.MaxItemsPerDocument, options.Value.MaxQueryResults);
+    private readonly ISqliteConnectionFactory connections;
+    private readonly ILogger<SqliteMemoryStore> logger;
+    private readonly IMemoryMutationObserver mutationObserver;
+    private readonly MemoryOptionsSnapshot limits;
+    private readonly SemaphoreSlim mutationGate = new(1, 1);
+
+    public SqliteMemoryStore(ISqliteConnectionFactory connections, IOptions<MemoryOptions> options, ILogger<SqliteMemoryStore> logger)
+        : this(connections, options, logger, NullMemoryMutationObserver.Instance)
+    {
+    }
+
+    public SqliteMemoryStore(ISqliteConnectionFactory connections, IOptions<MemoryOptions> options, ILogger<SqliteMemoryStore> logger, IMemoryMutationObserver mutationObserver)
+    {
+        this.connections = connections;
+        this.logger = logger;
+        this.mutationObserver = mutationObserver;
+        limits = new(options.Value.MaxDocuments, options.Value.MaxItemsPerDocument, options.Value.MaxQueryResults);
+    }
 
     public async Task<MemoryStoreResult> StoreAsync(MemoryStoreRequest request, CancellationToken cancellationToken = default)
     {
@@ -22,8 +36,11 @@ public sealed class SqliteMemoryStore(
             return new(MemoryStatus.InvalidRequest, Error: "The memory store request is invalid.");
 
         var document = MemoryDocumentFactory.Create(request.KnowledgeDocument, DateTimeOffset.UtcNow);
+        var acquired = false;
         try
         {
+            await mutationGate.WaitAsync(cancellationToken);
+            acquired = true;
             await using var connection = await connections.OpenConnectionAsync(cancellationToken);
             await BeginImmediateAsync(connection, cancellationToken);
             try
@@ -41,7 +58,9 @@ public sealed class SqliteMemoryStore(
 
                 await InsertDocumentAsync(connection, document, cancellationToken);
                 await CommitAsync(connection, cancellationToken);
-                return new(MemoryStatus.Success, MemoryDocumentFactory.Copy(document));
+                var committed = MemoryDocumentFactory.Copy(document);
+                await NotifyCommittedAsync(new(MemoryMutationType.Created, null, MemoryDocumentFactory.Copy(document), DateTimeOffset.UtcNow));
+                return new(MemoryStatus.Success, committed);
             }
             catch
             {
@@ -56,6 +75,7 @@ public sealed class SqliteMemoryStore(
             SqliteMemoryStoreLog.StoreFailed(logger);
             return new(MemoryStatus.Failed, Error: "Memory storage failed.");
         }
+        finally { if (acquired) mutationGate.Release(); }
     }
 
     public async Task<MemoryGetResult> GetAsync(string id, CancellationToken cancellationToken = default)
@@ -91,8 +111,11 @@ public sealed class SqliteMemoryStore(
         if (cancellationToken.IsCancellationRequested) return new(MemoryStatus.Cancelled);
         if (!Guid.TryParse(request.Id, out var id) || request.Items is null || request.Metadata is null || request.Items.Count > limits.MaxItemsPerDocument)
             return new(MemoryStatus.InvalidRequest, Error: "The memory update request is invalid.");
+        var acquired = false;
         try
         {
+            await mutationGate.WaitAsync(cancellationToken);
+            acquired = true;
             await using var connection = await connections.OpenConnectionAsync(cancellationToken);
             await BeginImmediateAsync(connection, cancellationToken);
             try
@@ -105,33 +128,44 @@ public sealed class SqliteMemoryStore(
                 await InsertMetadataAsync(connection, "memory_document_metadata", id, null, updated.Metadata.Properties, cancellationToken);
                 await InsertItemsAsync(connection, updated, cancellationToken);
                 await CommitAsync(connection, cancellationToken);
-                return new(MemoryStatus.Success, MemoryDocumentFactory.Copy(updated));
+                var previous = MemoryDocumentFactory.Copy(current);
+                var committed = MemoryDocumentFactory.Copy(updated);
+                await NotifyCommittedAsync(new(MemoryMutationType.Updated, MemoryDocumentFactory.Copy(current), MemoryDocumentFactory.Copy(updated), DateTimeOffset.UtcNow));
+                return new(MemoryStatus.Success, committed);
             }
             catch { await RollbackAsync(connection); throw; }
         }
         catch (OperationCanceledException) { return new(MemoryStatus.Cancelled); }
         catch (Exception) { SqliteMemoryStoreLog.UpdateFailed(logger); return new(MemoryStatus.Failed, Error: "Memory update failed."); }
+        finally { if (acquired) mutationGate.Release(); }
     }
 
     public async Task<MemoryDeleteResult> DeleteAsync(MemoryDeleteRequest request, CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested) return new(MemoryStatus.Cancelled);
         if (!Guid.TryParse(request.Id, out var id)) return new(MemoryStatus.InvalidRequest, "The memory delete request is invalid.");
+        var acquired = false;
         try
         {
+            await mutationGate.WaitAsync(cancellationToken);
+            acquired = true;
             await using var connection = await connections.OpenConnectionAsync(cancellationToken);
             await BeginImmediateAsync(connection, cancellationToken);
             try
             {
+                var previous = await ReadDocumentAsync(connection, id, cancellationToken);
+                if (previous is null) { await RollbackAsync(connection); return new(MemoryStatus.NotFound); }
                 var deleted = await DeleteDocumentAsync(connection, id, cancellationToken);
                 if (deleted == 0) { await RollbackAsync(connection); return new(MemoryStatus.NotFound); }
                 await CommitAsync(connection, cancellationToken);
+                await NotifyCommittedAsync(new(MemoryMutationType.Deleted, MemoryDocumentFactory.Copy(previous), null, DateTimeOffset.UtcNow));
                 return new(MemoryStatus.Success);
             }
             catch { await RollbackAsync(connection); throw; }
         }
         catch (OperationCanceledException) { return new(MemoryStatus.Cancelled); }
         catch (Exception) { SqliteMemoryStoreLog.DeleteFailed(logger); return new(MemoryStatus.Failed, "Memory delete failed."); }
+        finally { if (acquired) mutationGate.Release(); }
     }
 
     public async Task<MemoryQueryResult> QueryAsync(MemoryQuery query, CancellationToken cancellationToken = default)
@@ -306,6 +340,14 @@ public sealed class SqliteMemoryStore(
     private static bool IsUniqueViolation(SqliteException exception) =>
         exception.SqliteErrorCode == 19
         && exception.SqliteExtendedErrorCode is 1555 or 2067;
+
+    private async Task NotifyCommittedAsync(MemoryMutationCommitted mutation)
+    {
+        try { await mutationObserver.ObserveAsync(mutation, CancellationToken.None); }
+        catch { SqliteMemoryStoreLog.MutationObserverFailed(logger); }
+    }
+
+    public void Dispose() => mutationGate.Dispose();
 }
 
 internal static partial class SqliteMemoryStoreLog
@@ -322,4 +364,6 @@ internal static partial class SqliteMemoryStoreLog
     internal static partial void QueryFailed(ILogger logger);
     [LoggerMessage(EventId = 45, Level = LogLevel.Error, Message = "SQLite memory snapshot creation failed.")]
     internal static partial void SnapshotFailed(ILogger logger);
+    [LoggerMessage(EventId = 46, Level = LogLevel.Warning, Message = "A committed memory mutation observer failed.")]
+    internal static partial void MutationObserverFailed(ILogger logger);
 }

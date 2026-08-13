@@ -1,6 +1,6 @@
 # Memory Core
 
-> La captura `IMemorySnapshotProvider` materializa una copia consistente del corpus para el reindexado interno; no sustituye las consultas normales. Véase [Semantic Index Rebuild Foundation](semantic-index-rebuild.md).
+> `IMemorySnapshotProvider` materializa una copia consistente para rebuild y las escrituras emiten `MemoryMutationCommitted` solo después de commit para el mantenimiento incremental. Ninguno sustituye las consultas normales. Véanse [Semantic Index Rebuild Foundation](semantic-index-rebuild.md) y [Semantic Index Maintenance Foundation](semantic-index-maintenance.md).
 
 Memory Core es el almacén interno durable de `KnowledgeDocument`. Recibe conocimiento ya normalizado y ofrece Store, Update, Delete, Get y consultas exactas; no lee archivos, no conoce Readers, RawDocument, Filesystem, LLM, Planner ni herramientas.
 
@@ -10,4 +10,4 @@ La identidad de `MemoryDocument` es el `KnowledgeDocument.Id`, nunca el hash. So
 
 Las consultas de Memory son deterministas y exactas por id, documento de conocimiento, tipo, contenido, hash o propiedad de metadatos. Se ordenan por `UpdatedAt` descendente y después por Id. Search Engine Core consume `IMemoryStore` para búsqueda léxica de items; Memory no implementa ranking. No existen embeddings, búsqueda semántica, RAG ni endpoint o MemoryTool.
 
-Memory preserva exclusivamente procedencia y metadatos seguros de Knowledge. El contenido es dato no confiable y prompt injection sigue siendo texto. No hay historial, endpoint ni Tool. Vector Index y embeddings continúan separados e in-memory; su reindexado desde Memory durable requerirá una decisión posterior.
+El observer de mutaciones es posterior a commit e independiente del resultado de la escritura: un fallo de mantenimiento no revierte Memory durable. Memory preserva exclusivamente procedencia y metadatos seguros de Knowledge. El contenido es dato no confiable y prompt injection sigue siendo texto. No hay historial, endpoint ni Tool. Vector Index y embeddings continúan separados e in-memory; su mantenimiento es eventual y su recuperación es un rebuild explícito.

@@ -15,12 +15,12 @@ La familia se identifica por `VectorFamilyKey(Provider, Model, Version, Dimensio
 
 Un snapshot sin items publica un reemplazo vacío: devuelve `NoMemory` y `Published=true`, porque describe un corpus vacío reconciliado. Ante fallo de snapshot, batch, embedding, validación, límite o cancelación antes del commit, no hay publicación parcial y se conserva la familia anterior. Rebuilds concurrentes devuelven `AlreadyRunning`.
 
-El rebuild es idempotente para el mismo snapshot y familia; cambios o deletes en Memory se reflejan en el siguiente full rebuild. No hay sincronización incremental: una escritura posterior a `CapturedAt` puede dejar el índice eventualmente stale. `CapturedAt` es informativo, no una garantía de ausencia de escrituras posteriores.
+El rebuild es idempotente para el mismo snapshot y familia. Se coordina con el mantenimiento incremental mediante una generación capturada antes del snapshot: si Memory cambia durante la construcción, el snapshot puede publicarse pero el coordinador termina en `Dirty`, nunca en falso `Ready`. Un fallo o cancelación restaura el estado anterior solo cuando no hubo mutaciones desde el inicio; en caso contrario queda `Dirty`. `CapturedAt` es informativo, no una garantía de ausencia de escrituras posteriores.
 
 ## Privacidad y límites v1
 
 No se registran contenido de Memory, textos de entrada, vectores, metadata completa, rutas ni excepciones crudas; solo familia, conteos, estado, duración y códigos seguros. No se emiten eventos de Execution Audit Trail: es mantenimiento interno, no una Tool.
 
-No hay endpoint, Tool, integración Kai, UI, worker/hosted service, auto-rebuild en startup ni persistencia de vectors o embeddings. El servicio exige exactamente un generator: cero o más de uno fallan por indisponibilidad o selección ambigua. El snapshot, resultados de embeddings y records sombra coexisten en memoria; v1 prioriza consistencia y simplicidad sobre optimización de corpus grandes.
+No hay endpoint, Tool, integración Kai, UI, auto-rebuild en startup ni persistencia de vectors o embeddings. El servicio exige exactamente un generator: cero o más de uno fallan por indisponibilidad o selección ambigua. El snapshot, resultados de embeddings y records sombra coexisten en memoria; v1 prioriza consistencia y simplicidad sobre optimización de corpus grandes. El worker interno de mantenimiento y sus límites se documentan en [Semantic Index Maintenance Foundation](semantic-index-maintenance.md).
 
 Hybrid Search Graceful Degradation no modifica `IMemorySnapshotProvider`, `IVectorReindexService`, `ReplaceFamilyAsync` ni esta persistencia. Solo permite que retrieval continúe con lexical cuando semantic no está disponible o falla.

@@ -4,10 +4,12 @@ using KernelOS.Core.Embeddings;
 using KernelOS.Core.Knowledge;
 using KernelOS.Core.Memory;
 using KernelOS.Core.SemanticSearch;
+using KernelOS.Core.SemanticIndex;
 using KernelOS.Core.VectorIndex;
 using KernelOS.Core.VectorReindex;
 using KernelOS.Infrastructure.Memory;
 using KernelOS.Infrastructure.SemanticSearch;
+using KernelOS.Infrastructure.SemanticIndex;
 using KernelOS.Infrastructure.VectorIndex;
 using KernelOS.Infrastructure.VectorReindex;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -239,6 +241,26 @@ public sealed class MemoryVectorReindexServiceTests
 
         Assert.Equal(VectorReindexStatus.Cancelled, result.Status);
         Assert.Equal(VectorIndexStatus.Success, (await index.GetAsync(old.Id)).Status);
+    }
+
+    [Fact]
+    public async Task RebuildWithCommittedMutationDuringEmbeddingEndsDirty()
+    {
+        var coordinator = new SemanticIndexCoordinator();
+        using var store = new InMemoryMemoryStore(Options.Create(new MemoryOptions { MaxDocuments = 20, MaxItemsPerDocument = 200, MaxQueryResults = 200 }), coordinator);
+        using var index = Index();
+        var created = (await store.StoreAsync(new(Document("old")))).Document!;
+        var entered = new TaskCompletionSource(); var release = new TaskCompletionSource();
+        var generator = new FakeGenerator(entered: entered, release: release);
+        using var service = new MemoryVectorReindexService(store, index, [generator], TimeProvider.System, NullLogger<MemoryVectorReindexService>.Instance, coordinator);
+
+        var rebuilding = service.ReindexAsync();
+        await entered.Task;
+        await store.UpdateAsync(new(created.Id.ToString(), [created.Items[0] with { Content = "new", ContentHash = EmbeddingText.Hash("new") }], created.Metadata));
+        release.SetResult();
+
+        Assert.Equal(VectorReindexStatus.Success, (await rebuilding).Status);
+        Assert.Equal(SemanticIndexStatus.Dirty, coordinator.GetSnapshot().Status);
     }
 
     private static InMemoryMemoryStore Store(int maxDocuments = 20) => new(Options.Create(new MemoryOptions { MaxDocuments = maxDocuments, MaxItemsPerDocument = 200, MaxQueryResults = 200 }));

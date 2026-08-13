@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Semantic Index Maintenance Foundation: mutaciones de Memory posteriores a commit, generaciones coherentes, cola bounded y worker secuencial para aplicar patches atómicos por familia. Ante overflow, fallo o inconsistencias, el índice pasa a `Dirty` y requiere rebuild explícito; no incorpora outbox durable, auto-startup ni persistencia vectorial.
+- ADR 0033 y documentación de mantenimiento del índice semántico.
+
 - Hybrid Search Graceful Degradation: Hybrid conserva resultados lexical-only o semantic-only ante fallos técnicos de la otra rama, renormaliza la rama sana y propaga resultados parciales utilizables por RAG y Kai. Sin selector de providers, endpoints, Tools ni cambios de Core.
 - ADR 0032 y documentación de arquitectura de degradación controlada.
 

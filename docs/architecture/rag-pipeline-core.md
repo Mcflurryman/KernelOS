@@ -2,7 +2,7 @@
 
 > RAG continúa con resultados `PartialSuccess` de Hybrid cuando contienen contexto utilizable.
 
-RAG Pipeline orquesta `IHybridSearchEngine`, `IContextBuilder`, `IRagPromptBuilder` e `IChatModel`. No conoce filesystem, Readers, índices vectoriales, embeddings, Tools ni Planner. El flujo es query → retrieval → ContextPack → prompt determinista → modelo → respuesta.
+RAG Pipeline orquesta `IHybridSearchEngine`, `IContextBuilder`, `IRagPromptBuilder` e `IChatModel`. No conoce filesystem, Readers, índices vectoriales, embeddings, Tools ni Planner. El flujo es query → retrieval → ContextPack → prompt determinista → modelo → respuesta. La consistencia eventual del índice semántico se queda en retrieval; RAG no inspecciona ni modifica su estado de mantenimiento.
 
 Si Hybrid devuelve `PartialSuccess` con resultados, RAG construye contexto y llama al modelo, devolviendo `PartialSuccess` con warnings y citas disponibles. Si retrieval no devuelve resultados o Context Builder no produce items, devuelve `NoContext` y no llama al modelo. `Failed` y `Cancelled` son terminales. Así se diferencia una respuesta basada en conocimiento recuperado de una respuesta general del modelo.
 

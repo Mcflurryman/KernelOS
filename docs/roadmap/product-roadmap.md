@@ -3,8 +3,8 @@
 ## Actualización de Knowledge
 
 - Reconstruir explícitamente el índice semántico desde Memory durable: ✅ (sin auto-startup ni persistencia vectorial).
+- Sincronizar Memory con el índice semántico durante la ejecución: ✅ (interno, eventual, fail-open y recuperable mediante rebuild).
 - Hardening lexical-only/semantic-only para Hybrid/RAG: ✅ (sin selector de providers).
-- Sincronizar automáticamente Memory con el índice semántico: ⬜.
 
 Existe una traza interna de ejecución para observabilidad de dominio; no es una feature visible, persistente ni accesible por endpoint.
 
@@ -21,7 +21,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Preparar contexto y citas seguras desde resultados recuperados: ✅ (interno; consumido por RAG interno)
 - RAG interno basado en contexto recuperado: ✅ (degradación parcial usable; sin endpoint público)
 - Contexto conversacional reciente por request: ✅ (interno; sin persistencia)
-- Recordar conocimiento tras reiniciar: ✅ (Memory durable; Vector Index y embeddings se reconstruirán en un milestone futuro)
+- Recordar conocimiento tras reiniciar: ✅ (Memory durable; Vector Index y embeddings requieren rebuild explícito)
 
 ## Assistant
 

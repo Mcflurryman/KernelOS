@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- UI Foundation: Blazor WebAssembly alojado bajo `/ui`, interfaz HUD para conversaciones persistentes, deep links, create/delete/send, paginación, health de API/Ollama y feedback seguro de PartialSuccess, confirmation y entrega incierta.
+- UI Foundation no añade streaming, Markdown, acciones Approve/Reject/Execute, idempotencia durable, almacenamiento de navegador ni autenticación.
+- ADR 0035 y arquitectura de UI Foundation.
+
 - Persistent Conversation Memory: SQLite conversation store, turns serializados, historial para Chat/RAG, API `/conversations` y continuidad tras reinicio.
 - ADR 0034 y arquitectura de Conversation Memory; sin idempotencia durable, indexación semántica, títulos ni follow-up automático de pending executions.
 

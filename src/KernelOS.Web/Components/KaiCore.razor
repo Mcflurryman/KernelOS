@@ -1,0 +1,15 @@
+<div class="kai-core kai-core--@State.ToString().ToLowerInvariant()" role="img" aria-label="Kai Core @State">
+    <svg viewBox="0 0 240 240" aria-hidden="true">
+        <defs><filter id="core-glow"><feGaussianBlur stdDeviation="2.2" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs>
+        <circle class="ring ring--ghost" cx="120" cy="120" r="111" />
+        <circle class="ring ring--outer" cx="120" cy="120" r="100" />
+        <circle class="ring ring--middle" cx="120" cy="120" r="75" />
+        <circle class="ring ring--inner" cx="120" cy="120" r="48" />
+        <path class="spokes" d="M120 6v32M120 202v32M6 120h32M202 120h32M40 40l23 23M177 177l23 23M200 40l-23 23M63 177l-23 23" />
+        <path class="arc arc--one" d="M35 120a85 85 0 0 1 46-75" /><path class="arc arc--two" d="M159 45a85 85 0 0 1 46 75" />
+        <circle class="core-node core-node--one" cx="120" cy="20" r="4" /><circle class="core-node core-node--two" cx="196" cy="120" r="3" /><circle class="core-node core-node--three" cx="120" cy="196" r="3" />
+    </svg>
+    <span class="kai-core__center" aria-hidden="true"></span>
+</div>
+
+@code { [Parameter] public KaiCoreState State { get; set; } = KaiCoreState.Idle; }

@@ -1,20 +1,16 @@
 # KernelOS
 
-KernelOS soporta conversaciones locales persistentes en SQLite mediante `/conversations`, con continuidad entre reinicios. No hay cifrado de aplicación, indexación semántica conversacional ni seguimiento automático tras confirmaciones.
+KernelOS es una plataforma personal de IA local en .NET 8. Incluye conversaciones persistentes en SQLite y una UI Blazor WebAssembly alojada por la propia API bajo `/ui`.
 
-KernelOS incorpora un Audit Trail interno para correlacionar decisiones y ejecuciones con metadata segura; no almacena payloads sensibles ni expone una API pública.
-
-Kai Planner Orchestration v1 permite `POST /kai` con una Tool explícita: las acciones read-only autorizadas se ejecutan bajo policy; los side effects devuelven `RequiresConfirmation` y un pending externo. Los planes multi-task completan preflight de autorización antes de cualquier Tool. Kai no autoaprueba ni ejecuta fuera del executor.
-
-KernelOS es una plataforma personal de IA local. Kai es el asistente previsto sobre esa plataforma. El proyecto es un monolito modular .NET 8: Core define contratos; Infrastructure integra proveedores locales; Tools controla acciones; Api expone HTTP.
+Kai conversa localmente con Ollama, puede aplicar RAG interno y orquestar Planner bajo policy. Las acciones con efectos laterales requieren confirmación explícita; Kai no autoaprueba ni ejecuta fuera del executor.
 
 ## Estado actual
 
-Están implementados chat local mediante Ollama, Tool System, Planner determinista con planificación, autorización y ejecución separadas, Filesystem Capability Read Only, Document Readers (TXT, Markdown, JSON y CSV), Knowledge Core y Memory durable local en SQLite, mantenimiento incremental interno del índice semántico, retrieval híbrido resiliente, Context Builder, RAG Pipeline, Conversation Context Core y Kai Agent Core v1. Hybrid puede degradar a lexical-only o semantic-only ante un fallo técnico de la otra rama, sin convertir contexto válido en un fallo terminal. Conversation Context recibe historial reciente del caller, selecciona por presupuesto y mantiene separado el mensaje actual.
+Están implementados chat local mediante Ollama, Tool System, Planner con planificación, autorización y ejecución separadas, Filesystem Read Only, Document Readers, Knowledge Core, Memory durable local, retrieval híbrido, Context Builder, RAG Pipeline, Conversation Context, Kai Agent Core y Conversation Memory durable.
 
-Siguen pendientes la persistencia de conversaciones entre sesiones y experiencia pública de preguntas sobre documentos. La construcción de un plan no ejecuta Tools; las acciones con efectos laterales requieren aprobaciones de un solo uso, ligadas a plan, tarea y fingerprint, creadas mediante confirmación API explícita sobre un snapshot. La ejecución es secuencial y no hace rollback de efectos externos. Approvals, pending executions y Audit Trail siguen en memoria; Conversation Context no es una memoria conversacional persistente. Tampoco existen Scheduler, automatización de Windows, MCP, integraciones de correo/calendario, OCR, voz o UI.
+UI Foundation ofrece conversaciones bajo `/ui`: crear, borrar, navegar mediante deep links, leer historial, enviar turnos, ver estados de Kai y health de API/Ollama. La UI no tiene streaming, Markdown, acciones de confirmation, autenticación, adjuntos ni almacenamiento de borradores en el navegador.
 
-## Requisitos y ejecución
+## Uso local
 
 Se necesita .NET 8. Para chat o embeddings se necesita Ollama local y los modelos configurados; KernelOS nunca descarga modelos automáticamente.
 
@@ -25,30 +21,27 @@ dotnet test
 dotnet run --project src/KernelOS.Api
 ```
 
+Con la API en ejecución, abre `http://localhost:5266/ui`. Los perfiles de lanzamiento usan localhost, pero la exposición final depende de la configuración externa de hosting.
+
 La validación reproducible es:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\validate.ps1
 ```
 
-## Capacidades y límites
+## Límites
 
-- Filesystem solo permite `search`, `exists`, `metadata`, `resolve` y `list` dentro de raíces autorizadas. `Workspace` siempre está disponible; `Desktop` y `Documents` son opcionales según el sistema.
-- Los documentos se tratan como datos no confiables. No se ejecutan instrucciones, macros ni contenido activo.
-- El contenido y los modelos se procesan localmente por la configuración actual. Cualquier proveedor remoto futuro requerirá una decisión explícita.
-- No hay operaciones de escritura, endpoints de Knowledge/Search/Embeddings ni Tools públicas para esos componentes internos.
-- Memory usa SQLite local y es la fuente de verdad. Vector Index y embeddings son derivados en memoria: se mantienen de forma incremental tras un commit, con consistencia eventual, y un estado `Dirty` o un reinicio exige rebuild explícito. La configuración, migraciones y límites de seguridad se describen en la arquitectura de persistencia.
+- Las conversaciones se guardan localmente en SQLite sin cifrado de aplicación; no hay idempotencia durable ni correlación persistente de pending executions.
+- La UI conserva solo estado transitorio en memoria. SQLite es la fuente de verdad del historial.
+- Vector Index y embeddings son derivados en memoria; tras restart o estado `Dirty` requieren rebuild explícito.
+- No existen Scheduler, automatización de Windows, MCP, integraciones cloud, OCR, voz, UI de Tools/Memory/Knowledge ni producto multiusuario.
 
 ## Documentación
 
 - [Visión del proyecto](PROJECT.md)
 - [Arquitectura actual](docs/architecture/overview.md)
-- [Persistence Foundation](docs/architecture/persistence-foundation.md)
-- [Semantic Index Rebuild Foundation](docs/architecture/semantic-index-rebuild.md)
-- [Semantic Index Maintenance Foundation](docs/architecture/semantic-index-maintenance.md)
-- [Hybrid Search Graceful Degradation](docs/architecture/hybrid-search-graceful-degradation.md)
-- [Execution Audit Trail](docs/architecture/execution-audit-trail.md)
+- [UI Foundation](docs/architecture/ui-foundation.md)
+- [Persistent Conversation Memory](docs/architecture/persistent-conversation-memory.md)
 - [Roadmap](docs/roadmap/roadmap.md)
 - [Decisiones arquitectónicas](docs/decisions/)
-- [Guía de desarrollo](docs/guides/git-workflow.md)
 - [Changelog](CHANGELOG.md)

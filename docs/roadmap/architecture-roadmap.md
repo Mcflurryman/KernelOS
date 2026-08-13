@@ -1,99 +1,33 @@
 # Architecture Roadmap
 
-Persistent Conversation Memory (SQLite, API y turns serializados): ✅. Idempotencia durable, correlación pending/conversation, títulos, indexación semántica y UI continúan pendientes.
-
-## Actualización de Retrieval
-
-- Semantic Index Rebuild Foundation desde Memory durable: ✅ (rebuild explícito y atómico por familia; vectors y embeddings siguen volátiles).
-- Semantic Index Maintenance Foundation: ✅ (sync incremental interno, eventual y fail-open; `Dirty` recupera mediante rebuild explícito).
-- Hybrid Search Graceful Degradation: ✅ (fallback lexical-only o semantic-only ante fallo técnico; sin selector de provider).
-- Selección explícita de provider, auto-reindex de arranque y persistencia vectorial: ⬜.
-
-El Execution Audit Trail interno está implementado y validado; no implica persistencia, UI, métricas ni una API pública de audit.
-
-> Kai Planner Orchestration v1 y Architecture / Composition Cleanup: implementados y validados localmente.
-
 Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado / reservado.
 
-## Fase 1 — Engineering Foundation
+## Foundation
 
-**Objetivo:** cambios revisables y reproducibles. **Dependencia:** ninguna. **Estado:** ✅
+- Engineering workflow, configuración, ADRs y composition root modular: ✅
+- Runtime local: chat, Tool System, Planner y Filesystem Read Only: ✅
+- Document Readers, Knowledge y Memory durable SQLite: ✅
 
-- Workflow de ramas, CI, validación local, estándares y ADRs: ✅
-- Configuración mediante Options y línea base de pruebas: ✅
-- Architecture / Composition Cleanup: ✅
+## Retrieval and intelligence
 
-## Fase 2 — Runtime Foundation
+- Search lexical, embeddings, Vector Index, Semantic Search y Hybrid con degradación controlada: ✅
+- Context Builder, RAG, Conversation Context y Kai Agent Core v1: ✅
+- Persistencia de Vector Index/embeddings y auto-reindex de inicio: ⬜
 
-**Objetivo:** ejecutar interacciones locales controladas. **Dependencia:** Fase 1. **Estado:** ✅
+## Conversations and UI
 
-- `IChatModel` y Ollama Chat provider: ✅
-- Tool System, registro y router: ✅
-- Planner determinista de una tarea explícita, separado de ejecución: ✅
-- Filesystem Capability Read Only y raíces autorizadas: ✅
+- Persistent Conversation Memory: SQLite, API, turns serializados, historial acotado y paginación por secuencia: ✅
+- UI Foundation: Blazor WebAssembly alojado por KernelOS.Api bajo `/ui`, same-origin, deep links, conversaciones, health y feedback seguro de turns: ✅
+- Idempotencia durable, títulos, indexación semántica de conversaciones y correlación pending/conversation persistente: ⬜
+- Streaming, Markdown, adjuntos, confirmation actions, Tools UI, Memory UI y autenticación: ⬜
 
-## Fase 3 — Knowledge Ingestion
+## Automation
 
-**Objetivo:** convertir documentos autorizados en información trazable. **Dependencia:** Filesystem Capability. **Estado:** ✅
+- Tool Confirmation & Execution Policy, Approval Surface, preflight multi-task, Kai Planner Orchestration y Audit Trail interno: ✅
+- Scheduler, workers, notificaciones, persistencia de approvals/pending/audit y reanudación: ⬜
 
-- Document Readers para TXT, Markdown, JSON y CSV: ✅
-- Knowledge Core determinista: ✅
-- Persistence Foundation para Memory durable local: ✅
-- PDF, DOCX, XLSX y OCR: ⬜
-- Historial de versiones de Memory: ⬜
+## Integrations and productization
 
-## Fase 4 — Retrieval
-
-**Objetivo:** recuperar conocimiento sin confundir búsqueda léxica y semántica. **Dependencia:** Knowledge y Memory. **Estado:** 🟡
-
-- Search Engine Core léxico determinista: ✅
-- Embeddings Core y Ollama Embeddings Provider local: ✅
-- Vector Index: ✅
-- Rebuild explícito e incremental maintenance desde Memory durable: ✅
-- Persistencia de Vector Index y embeddings: ⬜
-- Semantic Search: ✅
-- Hybrid Search y degradación controlada: ✅
-
-## Fase 5 — Context & Intelligence
-
-**Objetivo:** construir contexto seguro para un Kai Agent. **Dependencia:** Retrieval estable y políticas de acceso. **Estado:** 🟡
-
-- Context Builder y citas/procedencia: ✅
-- RAG Pipeline: ✅
-- Conversation Context Core (historial reciente por request): ✅
-- Kai Agent Core v1 (Chat/RAG; Planner no disponible): ✅
-- Política de memoria a largo plazo: ⚪
-- Orquestación y razonamiento más allá del Planner determinista: ⚪
-
-## Fase 6 — Automation
-
-**Objetivo:** ejecutar trabajo autorizado y observable. **Dependencia:** Kai Agent, permisos y confirmaciones. **Estado:** 🟡
-
-- Tool Confirmation & Execution Policy: ✅
-- Execution Approval / Confirmation Surface: ✅
-- Multi-task Authorization Preflight: ✅
-- Kai Planner Orchestration: ✅
-- Execution Audit Trail interno: ✅
-- Task Executor, Scheduler, trabajos en segundo plano y notificaciones: ⚪
-- Políticas de permisos y confirmaciones para acciones sensibles: ⚪
-
-## Fase 7 — Integrations
-
-**Objetivo:** integrar sistemas externos mediante fronteras explícitas. **Dependencia:** Automation y seguridad. **Estado:** ⬜
-
-- Windows Automation, navegador, Email, Calendar, Outlook y almacenamiento cloud: ⬜
-- MCP: ⬜
-
-## Fase 8 — Multimodal
-
-**Objetivo:** ampliar entradas y salidas sin ejecutar contenido activo. **Dependencia:** ingestion y seguridad. **Estado:** ⬜
-
-- PDF enriquecido, DOCX, XLSX, OCR y Vision: ⬜
-- Speech-to-Text y Text-to-Speech: ⬜
-
-## Fase 9 — Productization
-
-**Objetivo:** distribuir y operar el producto localmente. **Dependencia:** capacidades estables. **Estado:** ⬜
-
-- Desktop UI, instalador, actualizaciones, empaquetado y releases: ⬜
-- Diagnóstico local, backup y migración: ⬜
+- Windows Automation, navegador, Email, Calendar, cloud y MCP: ⬜
+- PDF enriquecido, DOCX, XLSX, OCR, Vision y voz: ⬜
+- Instalador, actualizaciones, backup/migración, configuración de producto y UI administrativa: ⬜

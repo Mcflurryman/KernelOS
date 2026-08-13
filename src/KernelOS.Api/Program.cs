@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseStaticWebAssets();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -36,6 +37,9 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
+app.UseBlazorFrameworkFiles("/ui");
+app.UseStaticFiles();
+
 app.MapHealthEndpoints();
 app.MapChatEndpoints();
 app.MapKaiEndpoints();
@@ -45,6 +49,7 @@ app.MapPlannerEndpoints();
 app.MapExecutionEndpoints();
 app.MapDocumentEndpoints();
 app.MapFilesystemEndpoints();
+app.MapFallbackToFile("/ui/{*path:nonfile}", "ui/index.html");
 
 app.Run();
 

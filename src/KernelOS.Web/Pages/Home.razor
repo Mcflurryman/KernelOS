@@ -1,0 +1,29 @@
+@page "/"
+@inject ConversationApiClient ConversationClient
+@inject ConversationUiNotifier ConversationNotifier
+@inject NavigationManager NavigationManager
+<PageTitle>KernelOS · Kai Core</PageTitle>
+<section class="home-dashboard" aria-labelledby="kai-core-title">
+    <div class="home-hud home-hud--top-left" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="home-hud home-hud--top-right" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="home-hud home-hud--bottom-left" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="home-orbit home-orbit--one" aria-hidden="true"></div><div class="home-orbit home-orbit--two" aria-hidden="true"></div>
+    <KaiCore State="KaiCoreState.Idle" />
+    <div class="home-copy"><p class="hud-label">KERNEL OS // LOCAL NODE</p><h1 id="kai-core-title">KAI CORE</h1><p class="core-status"><span aria-hidden="true"></span>LOCAL INTELLIGENCE ONLINE</p><p>Start a conversation with Kai.</p><button class="hud-button" @onclick="CreateConversationAsync" disabled="@isCreating">@(isCreating ? "INITIALIZING" : "NEW CONVERSATION")</button>@if (errorMessage is not null) { <p class="error" role="alert">@errorMessage</p> }</div>
+    <div class="home-readout home-readout--left"><span>MODE</span><strong>AUTO</strong></div><div class="home-readout home-readout--right"><span>STORE</span><strong>PERSISTENT</strong></div>
+</section>
+
+@code {
+    private bool isCreating;
+    private string? errorMessage;
+    private async Task CreateConversationAsync()
+    {
+        if (isCreating) return;
+        isCreating = true; errorMessage = null;
+        var result = await ConversationClient.CreateConversationAsync();
+        isCreating = false;
+        if (!result.IsSuccess) { errorMessage = "Could not create a conversation. Try again when ready."; return; }
+        await ConversationNotifier.RequestRefreshAsync();
+        NavigationManager.NavigateTo($"/ui/conversations/{result.Value!.Id:D}");
+    }
+}

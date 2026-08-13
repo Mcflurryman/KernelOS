@@ -1,0 +1,17 @@
+@using KernelOS.Web.Conversations
+
+<HudPanel Label="CONFIRMATION REQUIRED" PanelClass="warning-panel">
+    <p>@Message</p>
+    @if (Confirmation is not null)
+    {
+        <p class="status-detail">RISK // @Confirmation.RiskLevel · REASON // @Confirmation.Reason</p>
+        @if (!string.IsNullOrWhiteSpace(Confirmation.SafeArgumentSummary)) { <p>@Confirmation.SafeArgumentSummary</p> }
+        @if (Confirmation.ExpiresAt is not null) { <p class="status-detail">EXPIRES // @Confirmation.ExpiresAt.Value.LocalDateTime.ToString("g")</p> }
+    }
+    <p class="status-detail">ACTION PAUSED // WAITING FOR AUTHORIZATION</p>
+</HudPanel>
+
+@code {
+    [Parameter, EditorRequired] public string Message { get; set; } = string.Empty;
+    [Parameter] public ConfirmationDto? Confirmation { get; set; }
+}

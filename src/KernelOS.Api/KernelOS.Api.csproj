@@ -4,6 +4,11 @@
     <ProjectReference Include="..\KernelOS.Core\KernelOS.Core.csproj" />
     <ProjectReference Include="..\KernelOS.Infrastructure\KernelOS.Infrastructure.csproj" />
     <ProjectReference Include="..\KernelOS.Tools\KernelOS.Tools.csproj" />
+    <ProjectReference Include="..\KernelOS.Web\KernelOS.Web.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

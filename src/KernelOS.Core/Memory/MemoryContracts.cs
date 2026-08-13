@@ -13,3 +13,8 @@ public interface IMemorySnapshotProvider
 {
     Task<MemorySnapshotResult> CreateSnapshotAsync(CancellationToken cancellationToken = default);
 }
+
+public interface IMemoryMutationObserver
+{
+    Task ObserveAsync(MemoryMutationCommitted mutation, CancellationToken cancellationToken = default);
+}

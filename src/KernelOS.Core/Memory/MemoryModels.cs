@@ -3,6 +3,7 @@ using KernelOS.Core.Knowledge;
 namespace KernelOS.Core.Memory;
 
 public enum MemoryStatus { Success, AlreadyExists, NotFound, InvalidRequest, Cancelled, Failed }
+public enum MemoryMutationType { Created, Updated, Deleted }
 
 public sealed record MemoryItem(Guid Id, Guid KnowledgeItemId, KnowledgeItemType Type, string Content, KnowledgeSource Source, KnowledgeMetadata Metadata, string ContentHash);
 public sealed record MemoryVersion(int Number, DateTimeOffset UpdatedAt, string ContentHash);
@@ -19,6 +20,7 @@ public sealed record MemoryGetResult(MemoryStatus Status, MemoryDocument? Docume
 public sealed record MemoryQuery(string? Id = null, Guid? KnowledgeDocumentId = null, Guid? MemoryItemId = null, KnowledgeItemType? ItemType = null, string? ExactContent = null, string? ContentHash = null, string? MetadataKey = null, string? MetadataValue = null, int Limit = 100, int Offset = 0);
 public sealed record MemoryQueryResult(MemoryStatus Status, IReadOnlyList<MemoryDocument>? Documents = null, string? Error = null);
 public sealed record MemorySnapshotResult(MemoryStatus Status, MemorySnapshot? Snapshot = null, string? Error = null);
+public sealed record MemoryMutationCommitted(MemoryMutationType Type, MemoryDocument? Previous, MemoryDocument? Current, DateTimeOffset CommittedAt);
 
 public sealed class MemorySnapshot
 {

@@ -12,6 +12,32 @@ namespace KernelOS.Tests;
 public sealed class SqliteMemoryStoreTests
 {
     [Fact]
+    public async Task CommittedMutationsCaptureTransactionPreviousAndCurrentSnapshots()
+    {
+        var observer = new RecordingMutationObserver();
+        await using var fixture = await SqliteMemoryFixture.CreateAsync(observer: observer);
+        var created = (await fixture.Store.StoreAsync(new(Document("old")))).Document!;
+        var changed = created.Items[0] with { Content = "new", ContentHash = "new-hash" };
+        await fixture.Store.UpdateAsync(new(created.Id.ToString(), [changed], created.Metadata));
+        await fixture.Store.DeleteAsync(new(created.Id.ToString()));
+
+        Assert.Collection(observer.Mutations,
+            mutation => Assert.Null(mutation.Previous),
+            mutation => { Assert.Equal("old", mutation.Previous!.Items[0].Content); Assert.Equal("new", mutation.Current!.Items[0].Content); },
+            mutation => { Assert.Equal("new", mutation.Previous!.Items[0].Content); Assert.Null(mutation.Current); });
+    }
+
+    [Fact]
+    public async Task ObserverFailureDoesNotChangeCommittedStoreSuccess()
+    {
+        await using var fixture = await SqliteMemoryFixture.CreateAsync(observer: new ThrowingMutationObserver());
+
+        var stored = await fixture.Store.StoreAsync(new(Document("durable")));
+
+        Assert.Equal(MemoryStatus.Success, stored.Status);
+        Assert.Equal(MemoryStatus.Success, (await fixture.Store.GetAsync(stored.Document!.Id.ToString())).Status);
+    }
+    [Fact]
     public async Task InitializerCreatesDatabaseSchemaAndIsIdempotent()
     {
         await using var fixture = await SqliteMemoryFixture.CreateAsync();
@@ -373,6 +399,17 @@ public sealed class SqliteMemoryStoreTests
         var items = contents.Select((content, index) => new KnowledgeItem(Guid.NewGuid(), index == 1 ? KnowledgeItemType.Code : KnowledgeItemType.Text, content, index, new KnowledgeSource(Guid.NewGuid(), $"safe-{index}", $"display-{index}", new(Line: index + 1, JsonPath: $"$.items[{index}]")), metadata with { Language = index == 1 ? "en" : "es" }, $"hash-{content}")).ToArray();
         return new(id, Guid.NewGuid(), "document", items, metadata, [], new DateTimeOffset(2026, 8, 12, 0, 0, 0, TimeSpan.Zero), "document-hash");
     }
+
+    private sealed class RecordingMutationObserver : IMemoryMutationObserver
+    {
+        public List<MemoryMutationCommitted> Mutations { get; } = [];
+        public Task ObserveAsync(MemoryMutationCommitted mutation, CancellationToken cancellationToken = default) { Mutations.Add(mutation); return Task.CompletedTask; }
+    }
+
+    private sealed class ThrowingMutationObserver : IMemoryMutationObserver
+    {
+        public Task ObserveAsync(MemoryMutationCommitted mutation, CancellationToken cancellationToken = default) => throw new InvalidOperationException();
+    }
 }
 
 internal sealed class SqliteMemoryFixture : IAsyncDisposable
@@ -388,14 +425,16 @@ internal sealed class SqliteMemoryFixture : IAsyncDisposable
     internal ISqliteDatabaseInitializer Initializer { get; }
     internal SqliteMemoryStore Store { get; }
 
-    internal static async Task<SqliteMemoryFixture> CreateAsync(int maxDocuments = 100, int maxItems = 100)
+    internal static async Task<SqliteMemoryFixture> CreateAsync(int maxDocuments = 100, int maxItems = 100, IMemoryMutationObserver? observer = null)
     {
         var directory = Path.Combine(Path.GetTempPath(), "KernelOS.Tests", Guid.NewGuid().ToString("N"));
         var paths = new PersistencePathResolver(Options.Create(new PersistenceOptions { DataDirectory = directory, DatabaseFile = "memory.db" }));
         var factory = new SqliteConnectionFactory(paths);
         var initializer = new SqliteDatabaseInitializer(paths, factory);
         await initializer.InitializeAsync();
-        return new(directory, paths.DatabasePath, factory, initializer, new SqliteMemoryStore(factory, Options.Create(new MemoryOptions { MaxDocuments = maxDocuments, MaxItemsPerDocument = maxItems, MaxQueryResults = 100 }), NullLogger<SqliteMemoryStore>.Instance));
+        return new(directory, paths.DatabasePath, factory, initializer, observer is null
+            ? new SqliteMemoryStore(factory, Options.Create(new MemoryOptions { MaxDocuments = maxDocuments, MaxItemsPerDocument = maxItems, MaxQueryResults = 100 }), NullLogger<SqliteMemoryStore>.Instance)
+            : new SqliteMemoryStore(factory, Options.Create(new MemoryOptions { MaxDocuments = maxDocuments, MaxItemsPerDocument = maxItems, MaxQueryResults = 100 }), NullLogger<SqliteMemoryStore>.Instance, observer));
     }
 
     public ValueTask DisposeAsync()

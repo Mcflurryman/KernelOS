@@ -1,6 +1,6 @@
 # Arquitectura actual
 
-> Semantic Index Rebuild Foundation añade un rebuild interno y explícito: `SQLite Memory → Snapshot → GenerateBatchAsync → shadow VectorRecords → ReplaceFamilyAsync → SemanticSearch`. La publicación atómica mantiene disponible el índice anterior durante la construcción.
+> Semantic Index Maintenance Foundation mantiene el índice derivado tras cada commit de Memory: `SQLite Memory → committed mutation → generation → bounded Channel → worker → ApplyFamilyPatchAsync`. El rebuild explícito sigue siendo la recuperación tras restart o estado `Dirty`.
 
 > Hybrid Search Graceful Degradation permite conservar retrieval lexical-only o semantic-only cuando la otra rama falla técnicamente; no selecciona providers ni altera el rebuild semántico.
 
@@ -25,6 +25,7 @@ Filesystem autorizado → Document Readers → RawDocument → Knowledge Core
                                                      → Memory Core → Lexical Search
 
 Embeddings Core → Ollama Embeddings Provider → Vector Index Core → Semantic Search
+Memory Core → committed mutation → Semantic Index Maintenance → Vector Index Core
 Memory Core → Lexical Search ─────────────────────────────────────────────────┐
 Embedding query → IEmbeddingGenerator → Semantic Search ──────────────────────┼→ Hybrid Search → Context Builder → RAG Pipeline → IChatModel
                                                                                 └→ degradación controlada ante fallo técnico de una rama
@@ -42,4 +43,4 @@ La Execution Approval Surface conserva un pending snapshot opaco del plan comple
 
 Filesystem no accede a rutas no autorizadas. Document Readers reciben referencias autorizadas y el contenido documental es no confiable. Ollama es local en la configuración actual; chat y embeddings usan clientes y modelos separados.
 
-Vector Index y embeddings siguen en memoria y derivados; approvals, pending executions y Audit Trail continúan volátiles, y Conversation Context solo vive por request. Las siguientes capas no existen todavía y no deben inferirse del diagrama: Scheduler, Windows Automation, MCP, integraciones de correo/calendario, OCR, Vision, voz y UI. El orden de evolución está en el [Architecture Roadmap](../roadmap/architecture-roadmap.md).
+Vector Index y embeddings siguen en memoria y derivados; el mantenimiento incremental es eventual y, tras restart o `Dirty`, requiere rebuild explícito. Approvals, pending executions y Audit Trail continúan volátiles, y Conversation Context solo vive por request. Las siguientes capas no existen todavía y no deben inferirse del diagrama: Scheduler, Windows Automation, MCP, integraciones de correo/calendario, OCR, Vision, voz y UI. El orden de evolución está en el [Architecture Roadmap](../roadmap/architecture-roadmap.md).

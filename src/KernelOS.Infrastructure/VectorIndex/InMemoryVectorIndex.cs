@@ -94,6 +94,53 @@ public sealed class InMemoryVectorIndex : IVectorIndex, IDisposable
         finally { writeGate.Release(); }
     }
 
+    public async Task<VectorPatchResult> ApplyFamilyPatchAsync(VectorFamilyPatchRequest request, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested) return new(VectorIndexStatus.Cancelled);
+        if (!TryPreparePatch(request, out var family, out var deleteIds, out var upserts, out var error)) return new(VectorIndexStatus.InvalidRequest, Error: error);
+        try { await writeGate.WaitAsync(cancellationToken); }
+        catch (OperationCanceledException) { return new(VectorIndexStatus.Cancelled); }
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var current = Volatile.Read(ref state);
+            var records = new Dictionary<Guid, VectorRecord>(current.Records);
+            var deleted = 0L;
+            foreach (var id in deleteIds)
+            {
+                if (records.TryGetValue(id, out var existing) && VectorFamilyKey.From(existing).Equals(family))
+                {
+                    records.Remove(id);
+                    deleted++;
+                }
+            }
+
+            foreach (var upsert in upserts)
+            {
+                if (records.TryGetValue(upsert.Id, out var byId))
+                {
+                    if (!VectorFamilyKey.From(byId).Equals(family)) return new(VectorIndexStatus.InvalidRequest, Error: "The vector patch conflicts with another family.");
+                    records.Remove(upsert.Id);
+                }
+
+                var sameIdentity = records.Values.FirstOrDefault(record => string.Equals(Identity(record), Identity(upsert), StringComparison.Ordinal));
+                if (sameIdentity is not null)
+                {
+                    if (!VectorFamilyKey.From(sameIdentity).Equals(family)) return new(VectorIndexStatus.InvalidRequest, Error: "The vector patch conflicts with another family.");
+                    records.Remove(sameIdentity.Id);
+                }
+                records.Add(upsert.Id, upsert);
+            }
+
+            if (records.Count > options.MaxRecords) return new(VectorIndexStatus.TooLarge, Error: "The vector record limit was reached.");
+            cancellationToken.ThrowIfCancellationRequested();
+            Volatile.Write(ref state, IndexState.Create(records));
+            return new(VectorIndexStatus.Success, deleted, upserts.Count);
+        }
+        catch (OperationCanceledException) { return new(VectorIndexStatus.Cancelled); }
+        finally { writeGate.Release(); }
+    }
+
     public Task<VectorGetResult> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested) return Task.FromResult(new VectorGetResult(VectorIndexStatus.Cancelled));
@@ -151,6 +198,31 @@ public sealed class InMemoryVectorIndex : IVectorIndex, IDisposable
         }
         if (prepared.Count > options.MaxRecords) return false;
         family = request.Family; records = prepared;
+        return true;
+    }
+
+    private bool TryPreparePatch(VectorFamilyPatchRequest request, out VectorFamilyKey family, out IReadOnlyList<Guid> deleteIds, out IReadOnlyList<VectorRecord> upserts, out string error)
+    {
+        family = request.Family!;
+        deleteIds = [];
+        upserts = [];
+        error = "The vector patch request is invalid.";
+        if (request.Family is null || !request.Family.IsValid() || request.DeleteIds is null || request.Upserts is null) return false;
+        if (request.DeleteIds.Any(id => id == Guid.Empty)) return false;
+        var prepared = new List<VectorRecord>();
+        var ids = new HashSet<Guid>();
+        var identities = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var candidate in request.Upserts)
+        {
+            if (!TryPrepare(candidate, out var record, out _)
+                || !VectorFamilyKey.From(record).Equals(request.Family)
+                || !ids.Add(record.Id)
+                || !identities.Add(Identity(record))) return false;
+            prepared.Add(record);
+        }
+        family = request.Family;
+        deleteIds = request.DeleteIds.Distinct().ToArray();
+        upserts = prepared;
         return true;
     }
 

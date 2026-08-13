@@ -1,6 +1,6 @@
 # Proyecto KernelOS
 
-> El estado actual incluye un servicio interno y explícito de rebuild del índice semántico desde Memory durable. No añade sync incremental, auto-reindex al arranque ni persistencia de vectors o embeddings.
+> El estado actual incluye rebuild explícito y mantenimiento incremental interno del índice semántico desde Memory durable. No añade auto-reindex al arranque ni persistencia de vectors o embeddings.
 
 El sistema incluye un Audit Trail interno y fail-open para la trazabilidad segura de decisiones y ejecuciones; no es persistente ni una capacidad pública.
 
@@ -27,6 +27,6 @@ La plataforma separa contratos independientes en Core, implementaciones y provee
 
 ## Objetivos y no objetivos actuales
 
-El objetivo presente incluye Memory durable local, retrieval híbrido con degradación controlada, RAG Pipeline interno, Conversation Context por request y Kai Agent Core v1 conservador. El historial reciente lo proporciona el caller; el mensaje actual permanece separado. Kai puede orquestar Planner para una Tool explícita, manteniendo la separación entre construir, autorizar y ejecutar: un plan multi-task completa autorización global antes de cualquier Tool, y sus approvals son acotadas, de un solo uso y se crean tras una confirmación API explícita sobre un snapshot. La ejecución sigue siendo secuencial y sin rollback externo. Conversation Memory entre sesiones, automatización general, proveedores cloud, UI, voz, visión y persistencia de Vector Index, embeddings, approvals, pending o audit siguen fuera del alcance actual.
+El objetivo presente incluye Memory durable local, mantenimiento incremental eventual del índice semántico, retrieval híbrido con degradación controlada, RAG Pipeline interno, Conversation Context por request y Kai Agent Core v1 conservador. El historial reciente lo proporciona el caller; el mensaje actual permanece separado. Kai puede orquestar Planner para una Tool explícita, manteniendo la separación entre construir, autorizar y ejecutar: un plan multi-task completa autorización global antes de cualquier Tool, y sus approvals son acotadas, de un solo uso y se crean tras una confirmación API explícita sobre un snapshot. La ejecución sigue siendo secuencial y sin rollback externo. Conversation Memory entre sesiones, automatización general, proveedores cloud, UI, voz, visión y persistencia de Vector Index, embeddings, approvals, pending o audit siguen fuera del alcance actual.
 
 La evolución futura y sus dependencias se mantienen en el [Roadmap](docs/roadmap/roadmap.md), no en este documento.

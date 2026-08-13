@@ -9,12 +9,18 @@ public sealed class InMemoryMemoryStore : IMemoryStore, IMemorySnapshotProvider,
     private readonly ConcurrentDictionary<Guid, MemoryDocument> documents = new();
     private readonly ConcurrentDictionary<Guid, Guid> knowledgeDocumentIds = new();
     private readonly MemoryOptionsSnapshot options;
+    private readonly IMemoryMutationObserver mutationObserver;
     private readonly SemaphoreSlim storeGate = new(1, 1);
 
-    public InMemoryMemoryStore(IOptions<MemoryOptions> options)
+    public InMemoryMemoryStore(IOptions<MemoryOptions> options) : this(options, NullMemoryMutationObserver.Instance)
+    {
+    }
+
+    public InMemoryMemoryStore(IOptions<MemoryOptions> options, IMemoryMutationObserver mutationObserver)
     {
         var value = options.Value;
         this.options = new(value.MaxDocuments, value.MaxItemsPerDocument, value.MaxQueryResults);
+        this.mutationObserver = mutationObserver;
     }
 
     public async Task<MemoryStoreResult> StoreAsync(MemoryStoreRequest request, CancellationToken cancellationToken = default)
@@ -30,7 +36,9 @@ public sealed class InMemoryMemoryStore : IMemoryStore, IMemorySnapshotProvider,
             if (documents.Count >= options.MaxDocuments) return new(MemoryStatus.InvalidRequest, Error: "The memory document limit was reached.");
             if (!knowledgeDocumentIds.TryAdd(document.KnowledgeDocumentId, document.Id)) return new(MemoryStatus.AlreadyExists);
             if (!documents.TryAdd(document.Id, document)) { knowledgeDocumentIds.TryRemove(document.KnowledgeDocumentId, out _); return new(MemoryStatus.AlreadyExists); }
-            return new(MemoryStatus.Success, MemoryDocumentFactory.Copy(document));
+            var current = MemoryDocumentFactory.Copy(document);
+            await NotifyCommittedAsync(new(MemoryMutationType.Created, null, MemoryDocumentFactory.Copy(document), DateTimeOffset.UtcNow));
+            return new(MemoryStatus.Success, current);
         }
         catch (OperationCanceledException) { return new(MemoryStatus.Cancelled); }
         catch { return new(MemoryStatus.Failed, Error: "Memory storage failed."); }
@@ -49,7 +57,13 @@ public sealed class InMemoryMemoryStore : IMemoryStore, IMemorySnapshotProvider,
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var updated = MemoryDocumentFactory.Update(current, request.Items, request.Metadata, DateTimeOffset.UtcNow);
-                if (documents.TryUpdate(id, updated, current)) return new(MemoryStatus.Success, MemoryDocumentFactory.Copy(updated));
+                if (documents.TryUpdate(id, updated, current))
+                {
+                    var previous = MemoryDocumentFactory.Copy(current);
+                    var committed = MemoryDocumentFactory.Copy(updated);
+                    await NotifyCommittedAsync(new(MemoryMutationType.Updated, MemoryDocumentFactory.Copy(current), MemoryDocumentFactory.Copy(updated), DateTimeOffset.UtcNow));
+                    return new(MemoryStatus.Success, committed);
+                }
             }
             return new(MemoryStatus.NotFound);
         }
@@ -68,6 +82,7 @@ public sealed class InMemoryMemoryStore : IMemoryStore, IMemorySnapshotProvider,
         {
             if (!documents.TryRemove(id, out var removed)) return new(MemoryStatus.NotFound);
             knowledgeDocumentIds.TryRemove(removed.KnowledgeDocumentId, out _);
+            await NotifyCommittedAsync(new(MemoryMutationType.Deleted, MemoryDocumentFactory.Copy(removed), null, DateTimeOffset.UtcNow));
             return new(MemoryStatus.Success);
         }
         finally { storeGate.Release(); }
@@ -124,4 +139,10 @@ public sealed class InMemoryMemoryStore : IMemoryStore, IMemorySnapshotProvider,
         && (query.MetadataKey is null || document.Metadata.Properties?.TryGetValue(query.MetadataKey, out var value) == true && value == query.MetadataValue);
 
     public void Dispose() => storeGate.Dispose();
+
+    private async Task NotifyCommittedAsync(MemoryMutationCommitted mutation)
+    {
+        try { await mutationObserver.ObserveAsync(mutation, CancellationToken.None); }
+        catch { }
+    }
 }

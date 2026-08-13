@@ -1,5 +1,7 @@
 # Proyecto KernelOS
 
+Conversation Memory durable persiste turnos locales y usa historial acotado entre sesiones. Permanece fuera de alcance la idempotencia HTTP, la correlación pending/conversation posterior a ejecución y la indexación semántica de conversaciones.
+
 > El estado actual incluye rebuild explícito y mantenimiento incremental interno del índice semántico desde Memory durable. No añade auto-reindex al arranque ni persistencia de vectors o embeddings.
 
 El sistema incluye un Audit Trail interno y fail-open para la trazabilidad segura de decisiones y ejecuciones; no es persistente ni una capacidad pública.

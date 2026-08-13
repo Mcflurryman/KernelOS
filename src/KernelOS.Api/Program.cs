@@ -39,6 +39,7 @@ app.UseExceptionHandler(errorApp =>
 app.MapHealthEndpoints();
 app.MapChatEndpoints();
 app.MapKaiEndpoints();
+app.MapConversationEndpoints();
 app.MapToolEndpoints();
 app.MapPlannerEndpoints();
 app.MapExecutionEndpoints();

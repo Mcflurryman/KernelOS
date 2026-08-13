@@ -1,5 +1,7 @@
 # KernelOS
 
+KernelOS soporta conversaciones locales persistentes en SQLite mediante `/conversations`, con continuidad entre reinicios. No hay cifrado de aplicación, indexación semántica conversacional ni seguimiento automático tras confirmaciones.
+
 KernelOS incorpora un Audit Trail interno para correlacionar decisiones y ejecuciones con metadata segura; no almacena payloads sensibles ni expone una API pública.
 
 Kai Planner Orchestration v1 permite `POST /kai` con una Tool explícita: las acciones read-only autorizadas se ejecutan bajo policy; los side effects devuelven `RequiresConfirmation` y un pending externo. Los planes multi-task completan preflight de autorización antes de cualquier Tool. Kai no autoaprueba ni ejecuta fuera del executor.

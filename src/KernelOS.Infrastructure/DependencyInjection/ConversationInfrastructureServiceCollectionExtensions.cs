@@ -1,5 +1,6 @@
 using KernelOS.Core.Conversation;
 using KernelOS.Infrastructure.Conversation;
+using KernelOS.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,6 +22,13 @@ internal static class ConversationInfrastructureServiceCollectionExtensions
                 "ConversationContext options are invalid.")
             .ValidateOnStart();
         services.AddSingleton<IConversationContextBuilder, ConversationContextBuilder>();
+        services.AddOptions<ConversationMemoryOptions>()
+            .Bind(configuration.GetSection(ConversationMemoryOptions.SectionName))
+            .Validate(options => options.MaxMessageCharacters > 0 && options.MaxListPageSize > 0 && options.MaxMessagesPageSize > 0, "ConversationMemory options are invalid.")
+            .ValidateOnStart();
+        services.AddSingleton<SqliteConversationStore>();
+        services.AddSingleton<IConversationStore>(provider => provider.GetRequiredService<SqliteConversationStore>());
+        services.AddSingleton<IConversationTurnOrchestrator, ConversationTurnOrchestrator>();
 
         return services;
     }

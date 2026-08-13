@@ -1,0 +1,213 @@
+@page "/conversations/{ConversationId:guid}"
+@implements IDisposable
+@inject ConversationApiClient ConversationClient
+@inject ConversationUiNotifier ConversationNotifier
+@inject NavigationManager NavigationManager
+<PageTitle>KernelOS · Conversation</PageTitle>
+
+@if (isLoading)
+{
+    <HudPanel Label="CONVERSATION LINK" PanelClass="state-panel"><p class="hud-loader" role="status"><span></span>ESTABLISHING LINK</p></HudPanel>
+}
+else if (loadError is not null)
+{
+    @if (isNotFound) { <button class="hud-button" @onclick="BackToConversations">BACK TO CONVERSATIONS</button> }
+    <HudPanel Label="CONVERSATION STATUS" PanelClass="state-panel state-panel--error"><h1>@(isNotFound ? "CONVERSATION NOT FOUND" : "CONNECTION INTERRUPTED")</h1><p class="error" role="alert">@loadError</p></HudPanel>
+}
+else
+{
+    <section class="conversation-view" aria-labelledby="conversation-title">
+        <header class="conversation-header"><div><p class="hud-label">CONVERSATION // @ShortId(conversation!.Id)</p><h1 id="conversation-title">PERSISTENT CONTEXT</h1></div><div class="conversation-actions"><p class="conversation-meta">UPDATED <time datetime="@conversation.UpdatedAt.ToString("O")">@conversation.UpdatedAt.LocalDateTime.ToString("g")</time></p><button class="hud-button hud-button--danger" @onclick="ShowDeleteConfirmation" disabled="@isSending">DELETE</button></div></header>
+        @if (showDeleteConfirmation) { <HudPanel Label="DELETE CONVERSATION" PanelClass="confirmation-panel"><p>This permanently removes the conversation and its messages.</p><div class="button-row"><button class="hud-button hud-button--danger" @onclick="DeleteConversationAsync" disabled="@isDeleting">@(isDeleting ? "DELETING" : "DELETE")</button><button class="hud-button" @onclick="CancelDelete" disabled="@isDeleting">CANCEL</button></div>@if (actionMessage is not null) { <p class="error" role="alert">@actionMessage</p> }</HudPanel> }
+        @if (confirmation is not null) { <HudPanel Label="CONFIRMATION REQUIRED" PanelClass="warning-panel"><p>@confirmation</p>@if (confirmationDetails is not null) { <p class="status-detail">RISK // @confirmationDetails.RiskLevel · REASON // @confirmationDetails.Reason</p><p>@confirmationDetails.SafeArgumentSummary</p> }<p class="status-detail">ACTION PAUSED // WAITING FOR AUTHORIZATION</p></HudPanel> }
+        @if (actionMessage is not null && !showDeleteConfirmation) { <HudPanel Label="TURN STATUS" PanelClass="@(sendState is ConversationSendState.Partial or ConversationSendState.Confirmation ? "warning-panel" : "state-panel state-panel--error")"><p role="alert">@actionMessage</p></HudPanel> }
+        <div class="conversation-core"><KaiCore State="@CoreState" /><p class="core-status" aria-live="polite"><span aria-hidden="true"></span>@StatusLabel</p></div>
+        @if (hasOlder) { <button class="load-older" @onclick="LoadOlderAsync" disabled="@isLoadingOlder">@(isLoadingOlder ? "LOADING EARLIER MESSAGES" : "LOAD OLDER")</button> }
+        @if (messages.Count == 0) { <HudPanel Label="MESSAGE STREAM" PanelClass="empty-conversation"><p class="empty-state">Start a conversation with Kai.</p></HudPanel> }
+        else { <ol class="message-list" aria-label="Conversation messages">
+            @foreach (var message in messages) { <li class="message message--@message.Role"><div class="message-header"><p class="message-role">@(message.Role == "user" ? "USER" : "KAI")</p><p class="message-sequence">SEQ @message.Sequence.ToString("D3")</p></div><p class="message-content">@message.Content</p><time datetime="@message.CreatedAt.ToString("O")">@message.CreatedAt.LocalDateTime.ToString("g")</time></li> }
+            @if (transientAnswer is not null) { <li class="message message--assistant message--transient"><div class="message-header"><p class="message-role">KAI // NOT PERSISTED</p><p class="message-sequence">PARTIAL RESPONSE</p></div><p class="message-content">@transientAnswer</p></li> }
+        </ol> }
+        @if (lastResponseDuration is not null || lastMode is not null || lastModel is not null) { <p class="turn-metadata">@if (lastMode is not null) { <span>@lastMode</span> } @if (lastModel is not null) { <span>@lastModel</span> } @if (lastResponseDuration is not null) { <span>@lastResponseDuration.Value.TotalSeconds.ToString("0.0")s</span> }</p> }
+        @if (lastWarnings.Count > 0) { <HudPanel Label="TURN NOTICE" PanelClass="warning-panel"><ul class="turn-list">@foreach (var warning in lastWarnings) { <li>@warning</li> }</ul></HudPanel> }
+        @if (lastCitations.Count > 0) { <HudPanel Label="SOURCES" PanelClass="sources-panel"><ul class="turn-list">@foreach (var citation in lastCitations) { <li>@citation</li> }</ul></HudPanel> }
+        <form class="composer" @onsubmit="SendAsync">
+            <label class="hud-label" for="composer-input">KAI INPUT</label>
+            <textarea id="composer-input" @ref="composerElement" @bind="draft" @bind:event="oninput" @onkeydown="HandleComposerKeyDown" @onkeydown:preventDefault="true" placeholder="Ask Kai..." aria-label="Message for Kai" disabled="@isSending"></textarea>
+            <div class="composer-footer"><span>MODE // AUTO</span><button class="hud-button" type="submit" disabled="@isSending || string.IsNullOrWhiteSpace(draft)">@(isSending ? "PROCESSING" : "SEND")</button></div>
+        </form>
+    </section>
+}
+
+@code {
+    [Parameter] public Guid ConversationId { get; set; }
+    private const int PageSize = 50;
+    private CancellationTokenSource? cancellation;
+    private ConversationSummaryDto? conversation;
+    private List<ConversationMessageDto> messages = [];
+    private ElementReference composerElement;
+    private string draft = string.Empty;
+    private string? loadError;
+    private string? actionMessage;
+    private string? confirmation;
+    private string? transientAnswer;
+    private Guid? pendingExecutionId;
+    private ConfirmationDto? confirmationDetails;
+    private IReadOnlyList<string> lastCitations = [];
+    private IReadOnlyList<string> lastWarnings = [];
+    private string? lastMode;
+    private string? lastModel;
+    private TimeSpan? lastResponseDuration;
+    private System.Diagnostics.Stopwatch? turnStopwatch;
+    private bool isLoading = true;
+    private bool isNotFound;
+    private bool hasOlder;
+    private bool isLoadingOlder;
+    private bool isSending;
+    private bool showDeleteConfirmation;
+    private bool isDeleting;
+    private int requestGeneration;
+    private ConversationSendState sendState;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cancellation?.Cancel(); cancellation?.Dispose(); cancellation = new CancellationTokenSource();
+        requestGeneration++;
+        isLoading = true; isNotFound = false; loadError = null; actionMessage = null; confirmation = null; confirmationDetails = null; transientAnswer = null; pendingExecutionId = null; lastCitations = []; lastWarnings = []; lastMode = null; lastModel = null; lastResponseDuration = null; messages = []; hasOlder = false; sendState = ConversationSendState.Idle;
+        await LoadConversationAsync(requestGeneration, true);
+    }
+
+    private async Task LoadConversationAsync(int generation, bool focusComposer)
+    {
+        var token = cancellation!.Token;
+        var conversationResult = await ConversationClient.GetConversationAsync(ConversationId, token);
+        if (!IsCurrent(generation)) return;
+        if (!conversationResult.IsSuccess) { isLoading = false; isNotFound = conversationResult.Status == ConversationApiStatus.NotFound; loadError = MessageFor(conversationResult.Status); return; }
+        conversation = conversationResult.Value;
+        await ReloadMessagesAsync(generation);
+        if (!IsCurrent(generation)) return;
+        isLoading = false;
+        if (focusComposer && loadError is null) await FocusComposerAsync();
+    }
+
+    private async Task ReloadMessagesAsync(int generation)
+    {
+        var result = await ConversationClient.GetMessagesAsync(ConversationId, cancellation!.Token);
+        if (!IsCurrent(generation)) return;
+        if (!result.IsSuccess) { loadError = MessageFor(result.Status); isNotFound = result.Status == ConversationApiStatus.NotFound; return; }
+        messages = result.Value!.OrderBy(message => message.Sequence).ToList();
+        hasOlder = messages.Count == PageSize;
+    }
+
+    private async Task LoadOlderAsync()
+    {
+        if (isLoadingOlder || messages.Count == 0) return;
+        isLoadingOlder = true;
+        var generation = requestGeneration;
+        var result = await ConversationClient.GetMessagesAsync(ConversationId, messages[0].Sequence, cancellation!.Token);
+        if (IsCurrent(generation) && result.IsSuccess)
+        {
+            messages = messages.Concat(result.Value!).GroupBy(message => message.Id).Select(group => group.First()).OrderBy(message => message.Sequence).ToList();
+            hasOlder = result.Value!.Count == PageSize;
+        }
+        isLoadingOlder = false;
+    }
+
+    private async Task SendAsync()
+    {
+        if (isSending || string.IsNullOrWhiteSpace(draft)) return;
+        var generation = requestGeneration;
+        isSending = true; sendState = ConversationSendState.Sending; actionMessage = null; confirmation = null; transientAnswer = null; turnStopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var result = await ConversationClient.SendTurnAsync(ConversationId, draft, cancellation!.Token);
+        if (!IsCurrent(generation)) return;
+        turnStopwatch.Stop(); lastResponseDuration = turnStopwatch.Elapsed;
+        isSending = false;
+        await HandleTurnResultAsync(result, generation);
+    }
+
+    private async Task HandleTurnResultAsync(ConversationApiResult<ConversationTurnDto> result, int generation)
+    {
+        SetTransientMetadata(result.Value);
+        switch (result.Status)
+        {
+            case ConversationApiStatus.Success:
+                draft = string.Empty; sendState = ConversationSendState.Success; await ReloadAfterTurnAsync(generation); await FocusComposerAsync(); break;
+            case ConversationApiStatus.PartialSuccess:
+                draft = result.Value?.UserMessageId is null ? draft : string.Empty; sendState = ConversationSendState.Partial;
+                transientAnswer = result.Value?.AssistantMessageId is null ? result.Value?.Answer : null;
+                actionMessage = transientAnswer is null ? "The response completed with a warning." : "Response generated, but it could not be saved.";
+                await ReloadAfterTurnAsync(generation); break;
+            case ConversationApiStatus.ConfirmationRequired:
+                draft = result.Value?.UserMessageId is null ? draft : string.Empty; sendState = ConversationSendState.Confirmation; pendingExecutionId = result.Value?.PendingExecutionId;
+                confirmationDetails = result.Value?.Confirmation; confirmation = result.Value?.Answer ?? confirmationDetails?.Description ?? "Action paused while confirmation is required."; actionMessage = "CONFIRMATION REQUIRED";
+                await ReloadAfterTurnAsync(generation); break;
+            case ConversationApiStatus.NotFound:
+                await ConversationNotifier.RequestRefreshAsync(); NavigationManager.NavigateTo("/ui"); break;
+            case ConversationApiStatus.BadRequest:
+                sendState = ConversationSendState.Invalid; actionMessage = "The message could not be accepted. Review it and try again."; break;
+            case ConversationApiStatus.Cancelled:
+                sendState = ConversationSendState.Cancelled; actionMessage = "CANCELLED. The message may have been saved."; await ReloadAfterTurnAsync(generation); break;
+            case ConversationApiStatus.Uncertain:
+                sendState = ConversationSendState.Uncertain; actionMessage = "Delivery status is uncertain. Reload the conversation before sending again."; await ReloadAfterTurnAsync(generation); break;
+            default:
+                sendState = ConversationSendState.Failed; actionMessage = "The turn could not be completed. The message may have been saved."; await ReloadAfterTurnAsync(generation); break;
+        }
+    }
+
+    private void SetTransientMetadata(ConversationTurnDto? turn)
+    {
+        lastMode = turn?.ModeUsed;
+        lastModel = turn?.Model;
+        lastCitations = ReadReferences(turn?.Citations, "displayReference", "safeReference");
+        lastWarnings = ReadWarnings(turn?.Warnings);
+    }
+
+    private static IReadOnlyList<string> ReadReferences(System.Text.Json.JsonElement? values, params string[] properties)
+    {
+        if (values is not { ValueKind: System.Text.Json.JsonValueKind.Array } array) return [];
+        return array.EnumerateArray().Select(item => properties.Select(property => item.TryGetProperty(property, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.String ? value.GetString() : null).FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))).Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value!).ToArray();
+    }
+
+    private static IReadOnlyList<string> ReadWarnings(System.Text.Json.JsonElement? values)
+    {
+        if (values is not { ValueKind: System.Text.Json.JsonValueKind.Array } array) return [];
+        return array.EnumerateArray().Select(item => item.TryGetProperty("message", out var message) && message.ValueKind == System.Text.Json.JsonValueKind.String ? message.GetString() : "Kai returned a response warning.").ToArray()!;
+    }
+
+    private async Task ReloadAfterTurnAsync(int generation)
+    {
+        await ReloadMessagesAsync(generation);
+        if (IsCurrent(generation)) await ConversationNotifier.RequestRefreshAsync();
+    }
+
+    private async Task HandleComposerKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key != "Enter") return;
+        if (args.ShiftKey) { draft += "\n"; return; }
+        await SendAsync();
+    }
+
+    private void ShowDeleteConfirmation() { showDeleteConfirmation = true; actionMessage = null; }
+    private void BackToConversations() => NavigationManager.NavigateTo("/ui");
+    private void CancelDelete() { showDeleteConfirmation = false; actionMessage = null; }
+    private async Task DeleteConversationAsync()
+    {
+        if (isDeleting) return;
+        isDeleting = true;
+        var result = await ConversationClient.DeleteConversationAsync(ConversationId, cancellation!.Token);
+        if (cancellation.IsCancellationRequested) return;
+        isDeleting = false;
+        if (!result.IsSuccess) { actionMessage = result.Status == ConversationApiStatus.NotFound ? "Conversation no longer exists." : "Could not delete this conversation."; return; }
+        await ConversationNotifier.RequestRefreshAsync();
+        NavigationManager.NavigateTo("/ui");
+    }
+
+    private KaiCoreState CoreState => sendState switch { ConversationSendState.Sending => KaiCoreState.Thinking, ConversationSendState.Success => KaiCoreState.Success, ConversationSendState.Partial or ConversationSendState.Confirmation => KaiCoreState.Warning, ConversationSendState.Failed or ConversationSendState.Uncertain or ConversationSendState.Cancelled => KaiCoreState.Error, _ => KaiCoreState.Idle };
+    private string StatusLabel => sendState switch { ConversationSendState.Sending => "KAI PROCESSING", ConversationSendState.Success => "TURN COMPLETE", ConversationSendState.Partial => "PARTIAL RESPONSE", ConversationSendState.Confirmation => "CONFIRMATION REQUIRED", ConversationSendState.Cancelled => "CANCELLED", ConversationSendState.Failed => "FAILED", ConversationSendState.Uncertain => "DELIVERY UNCERTAIN", _ => "KAI IDLE" };
+    private bool IsCurrent(int generation) => !cancellation!.IsCancellationRequested && generation == requestGeneration;
+    private async Task FocusComposerAsync() { try { await composerElement.FocusAsync(); } catch (InvalidOperationException) { } }
+    public void Dispose() { cancellation?.Cancel(); cancellation?.Dispose(); }
+    private static string MessageFor(ConversationApiStatus status) => status switch { ConversationApiStatus.NotFound => "This conversation does not exist.", ConversationApiStatus.Uncertain => "KernelOS is unavailable.", _ => "Could not load this conversation." };
+    private static string ShortId(Guid id) => id.ToString("N")[..8];
+    private enum ConversationSendState { Idle, Sending, Success, Partial, Confirmation, Invalid, Cancelled, Failed, Uncertain }
+}

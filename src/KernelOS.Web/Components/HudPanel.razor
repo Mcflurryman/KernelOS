@@ -1,0 +1,11 @@
+<section class="hud-panel @PanelClass" aria-label="@Label">
+    <span class="hud-corner hud-corner--tl" aria-hidden="true"></span><span class="hud-corner hud-corner--tr" aria-hidden="true"></span>
+    <span class="hud-corner hud-corner--bl" aria-hidden="true"></span><span class="hud-corner hud-corner--br" aria-hidden="true"></span>
+    @if (!string.IsNullOrWhiteSpace(Label)) { <p class="hud-label">@Label</p> }
+    @ChildContent
+</section>
+@code {
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? PanelClass { get; set; }
+    [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
+}

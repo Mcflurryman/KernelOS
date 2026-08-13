@@ -1,0 +1,83 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject ConversationApiClient ConversationClient
+@inject ConversationUiNotifier ConversationNotifier
+@inject NavigationManager NavigationManager
+
+<div class="app-shell">
+    <header class="top-bar">
+        <a class="brand" href=""><span class="brand__mark" aria-hidden="true"></span><span><strong>KERNEL OS</strong><small>LOCAL INTELLIGENCE SYSTEM</small></span></a>
+        <SystemStatusStrip />
+    </header>
+    <div class="app-frame">
+        <aside class="sidebar" aria-label="Primary navigation">
+            <p class="sidebar-title">◇ CONVERSATIONS</p>
+            <button class="hud-button sidebar-create" @onclick="CreateConversationAsync" disabled="@isCreating"><span aria-hidden="true">+</span>@(isCreating ? "INITIALIZING" : "NEW CONVERSATION")</button>
+            @if (actionError is not null) { <p class="sidebar-error" role="alert">@actionError</p> }
+            <nav aria-label="Conversations">
+                @if (isLoading) { <p class="hud-loader" role="status"><span></span>LOADING</p> }
+                else if (errorMessage is not null) { <p class="sidebar-error" role="alert">@errorMessage</p> }
+                else if (conversations.Count == 0) { <p class="sidebar-status">No conversations yet.</p> }
+                else { <ul class="sidebar-conversations">
+                    @foreach (var conversation in conversations) { <li><NavLink href="@($"conversations/{conversation.Id:D}")" class="conversation-nav" aria-label="@($"Conversation {ShortId(conversation.Id)}")"><span class="conversation-node" aria-hidden="true"></span><span><strong>@ShortId(conversation.Id)</strong><small>UPDATED @conversation.UpdatedAt.LocalDateTime.ToString("g")</small></span></NavLink></li> }
+                </ul> }
+                @if (!isLoading && errorMessage is null && hasMore) { <button class="load-older" @onclick="LoadMoreAsync" disabled="@isLoadingMore">@(isLoadingMore ? "LOADING" : "LOAD MORE")</button> }
+            </nav>
+        </aside>
+        <main class="main-content">@Body</main>
+    </div>
+</div>
+
+@code {
+    private readonly CancellationTokenSource cancellation = new();
+    private IReadOnlyList<ConversationSummaryDto> conversations = [];
+    private bool isLoading = true;
+    private bool isCreating;
+    private bool hasMore;
+    private bool isLoadingMore;
+    private string? errorMessage;
+    private string? actionError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ConversationNotifier.RefreshRequested += RefreshAsync;
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        var result = await ConversationClient.ListConversationsAsync(cancellationToken: cancellation.Token);
+        if (cancellation.IsCancellationRequested) return;
+        isLoading = false;
+        if (result.IsSuccess) { conversations = result.Value!; hasMore = conversations.Count == 50; errorMessage = null; return; }
+        errorMessage = result.Status == ConversationApiStatus.Uncertain ? "KernelOS is unavailable." : "Could not load conversations.";
+    }
+
+    private async Task LoadMoreAsync()
+    {
+        if (isLoadingMore) return;
+        isLoadingMore = true;
+        var result = await ConversationClient.ListConversationsAsync(conversations.Count, cancellation.Token);
+        if (!cancellation.IsCancellationRequested && result.IsSuccess)
+        {
+            conversations = conversations.Concat(result.Value!).GroupBy(conversation => conversation.Id).Select(group => group.First()).OrderByDescending(conversation => conversation.UpdatedAt).ThenBy(conversation => conversation.Id).ToArray();
+            hasMore = result.Value!.Count == 50;
+        }
+        isLoadingMore = false;
+    }
+
+    private async Task CreateConversationAsync()
+    {
+        if (isCreating) return;
+        isCreating = true; actionError = null;
+        var result = await ConversationClient.CreateConversationAsync(cancellation.Token);
+        isCreating = false;
+        if (cancellation.IsCancellationRequested) return;
+        if (!result.IsSuccess) { actionError = "Could not create a conversation. Try again when ready."; return; }
+        await RefreshAsync();
+        NavigationManager.NavigateTo($"/ui/conversations/{result.Value!.Id:D}");
+    }
+
+    public void Dispose() { ConversationNotifier.RefreshRequested -= RefreshAsync; cancellation.Cancel(); cancellation.Dispose(); }
+    private static string ShortId(Guid id) => id.ToString("N")[..8];
+}

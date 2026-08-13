@@ -1,0 +1,29 @@
+@using KernelOS.Web.SystemStatus
+@implements IDisposable
+@inject HealthApiClient HealthClient
+
+<div class="system-status-strip" aria-label="System status" aria-live="polite">
+    <span class="system-status system-status--@KernelStatus.ToString().ToLowerInvariant()">KERNEL API <strong>@KernelStatus.ToString().ToUpperInvariant()</strong></span>
+    <span class="system-status system-status--@OllamaStatus.ToString().ToLowerInvariant()">OLLAMA <strong>@OllamaStatus.ToString().ToUpperInvariant()</strong></span>
+    <button class="status-refresh" @onclick="RefreshAsync" disabled="@isRefreshing" aria-label="Refresh system status">@(isRefreshing ? "CHECKING" : "REFRESH")</button>
+</div>
+
+@code {
+    private readonly CancellationTokenSource cancellation = new();
+    private bool isRefreshing;
+    private HealthStatus KernelStatus { get; set; } = HealthStatus.Degraded;
+    private HealthStatus OllamaStatus { get; set; } = HealthStatus.Degraded;
+
+    protected override Task OnInitializedAsync() => RefreshAsync();
+
+    private async Task RefreshAsync()
+    {
+        if (isRefreshing) return;
+        isRefreshing = true;
+        var kernel = await HealthClient.GetKernelApiAsync(cancellation.Token);
+        var ollama = await HealthClient.GetOllamaAsync(cancellation.Token);
+        if (!cancellation.IsCancellationRequested) { KernelStatus = kernel.Status; OllamaStatus = ollama.Status; isRefreshing = false; }
+    }
+
+    public void Dispose() { cancellation.Cancel(); cancellation.Dispose(); }
+}

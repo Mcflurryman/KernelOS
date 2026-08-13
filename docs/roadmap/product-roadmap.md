@@ -1,50 +1,26 @@
 # Product Roadmap
 
-## Actualización de Knowledge
-
-- Reconstruir explícitamente el índice semántico desde Memory durable: ✅ (sin auto-startup ni persistencia vectorial).
-- Sincronizar Memory con el índice semántico durante la ejecución: ✅ (interno, eventual, fail-open y recuperable mediante rebuild).
-- Hardening lexical-only/semantic-only para Hybrid/RAG: ✅ (sin selector de providers).
-
-Existe una traza interna de ejecución para observabilidad de dominio; no es una feature visible, persistente ni accesible por endpoint.
-
-> Kai puede iniciar acciones explícitas bajo policy y devolver confirmación pendiente. No hay auto-approval, agent loop, scheduler, memoria conversacional persistente, navegador, Spotify, Maps, trading ni coding agent.
-
 Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado / reservado.
 
-## Knowledge
+## Knowledge and assistant
 
-- Leer documentos TXT, Markdown, JSON y CSV dentro de raíces autorizadas: ✅
-- Transformar documentos leídos en Knowledge y conservarlo de forma durable en SQLite local: ✅ (interno; sin endpoint de Knowledge/Memory)
-- Buscar conocimiento por coincidencia exacta, tokens y prefijos: ✅ (interno; no es búsqueda semántica)
-- Buscar documentos por significado y combinar resultados: ✅ (interno; sin endpoint, Tool ni RAG)
-- Preparar contexto y citas seguras desde resultados recuperados: ✅ (interno; consumido por RAG interno)
-- RAG interno basado en contexto recuperado: ✅ (degradación parcial usable; sin endpoint público)
-- Contexto conversacional reciente por request: ✅ (interno; sin persistencia)
-- Recordar conocimiento tras reiniciar: ✅ (Memory durable; Vector Index y embeddings requieren rebuild explícito)
+- Leer documentos autorizados TXT, Markdown, JSON y CSV, transformarlos en Knowledge y conservar Memory local: ✅
+- Recuperación lexical y semántica, contexto seguro, RAG interno y citas: ✅
+- Conversar localmente con Ollama y usar Kai Agent para Chat/RAG/Planner explícito: ✅
+- Conversaciones persistentes entre sesiones con historial acotado: ✅
+- UI web local para crear, borrar, leer y enviar conversaciones bajo `/ui`: ✅
+- Citas y metadata visibles en UI: 🟡 (transitorias, no persistidas)
+- Streaming, Markdown, adjuntos y búsqueda/administración visible de Memory/Knowledge: ⬜
 
-## Assistant
+## Actions and automation
 
-- Conversar localmente con Ollama: ✅
-- Construir un plan explícito sin ejecutarlo y ejecutar un plan validado mediante una Tool registrada: ✅
-- Exigir confirmación one-shot para Tools declaradas con efectos laterales: ✅ (Core; sin UI de confirmación)
-- Confirmar o rechazar acciones sensibles mediante API y ejecutar el snapshot aprobado: ✅ (sin integración Kai ni UI)
-- Autorizar un plan multi-task completo antes de cualquier Tool: ✅ (sin rollback de efectos externos)
-- Kai Agent Core v1 para Chat/RAG y Planner explícito: ✅
-- Trazabilidad interna de decisiones y ejecuciones: ✅ (sin endpoint, UI ni persistencia)
-- Usar contexto recuperado, recordar conversaciones y responder con fuentes: ⬜
-- Recordar conversaciones entre sesiones o que Kai recuerde todo lo hablado: ⬜
-- Kai Agent autónomo: ⚪
+- Construir planes y exigir confirmación one-shot para efectos laterales: ✅
+- Confirmar/rechazar por API y ejecutar snapshots aprobados: ✅
+- Acciones de confirmation desde conversación, agent loop, scheduler y notificaciones: ⬜
 
-## Automation e integraciones
+## Integrations and product
 
-- Consultar filesystem en modo Read Only bajo raíces autorizadas: ✅
-- Escribir o administrar archivos, programar tareas, controlar Windows y notificar: ⬜
-- Calendar, Email, Outlook, navegador, Drive y MCP: ⬜
-
-## Multimodal y producto
-
-- PDF, Word, Excel, OCR, imágenes y voz: ⬜
-- Desktop UI, configuración de producto, instalación y actualizaciones: ⬜
-
-Los modelos locales se configuran explícitamente. `embeddinggemma` sirve para generar vectores, pero no habilita por sí solo Vector Index, Semantic Search, Hybrid Search ni RAG.
+- Filesystem Read Only bajo raíces autorizadas: ✅
+- Escritura de archivos, Windows Automation, navegador, Email, Calendar, Outlook, Drive y MCP: ⬜
+- PDF, Office, OCR, imágenes y voz: ⬜
+- Autenticación multiusuario, configuración de producto, instalador, actualizaciones y desktop app: ⬜

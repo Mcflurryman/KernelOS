@@ -1,5 +1,7 @@
 # Arquitectura actual
 
+> Actualización UI Foundation: `KernelOS.Web` es Blazor WebAssembly alojado por `KernelOS.Api` bajo `/ui`. El flujo es Browser → `/ui` → WebAssembly → `HttpClient` same-origin → Conversation/Health API → SQLite/Kai. No existe un segundo backend, CORS ni acceso directo de Web a Infrastructure; el fallback SPA está limitado a `/ui`. Véase [UI Foundation](ui-foundation.md).
+
 Conversation Memory es un dominio SQLite separado de Knowledge Memory. La API `/conversations` orquesta turnos durables con serialización por conversación; no indexa conversaciones ni altera Approval, Pending o Audit Trail.
 
 > Semantic Index Maintenance Foundation mantiene el índice derivado tras cada commit de Memory: `SQLite Memory → committed mutation → generation → bounded Channel → worker → ApplyFamilyPatchAsync`. El rebuild explícito sigue siendo la recuperación tras restart o estado `Dirty`.

@@ -24,5 +24,6 @@
     <ProjectReference Include="..\..\src\KernelOS.Core\KernelOS.Core.csproj" />
     <ProjectReference Include="..\..\src\KernelOS.Infrastructure\KernelOS.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\KernelOS.Tools\KernelOS.Tools.csproj" />
+    <ProjectReference Include="..\..\src\KernelOS.Web\KernelOS.Web.csproj" />
   </ItemGroup>
 </Project>

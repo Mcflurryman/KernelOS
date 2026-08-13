@@ -1,34 +1,24 @@
 # Proyecto KernelOS
 
-Conversation Memory durable persiste turnos locales y usa historial acotado entre sesiones. Permanece fuera de alcance la idempotencia HTTP, la correlación pending/conversation posterior a ejecución y la indexación semántica de conversaciones.
+KernelOS es una plataforma local-first para construir un asistente personal llamado Kai. Prioriza control de datos, modelos, acciones y permisos sin acoplar decisiones de producto a un proveedor.
 
-> El estado actual incluye rebuild explícito y mantenimiento incremental interno del índice semántico desde Memory durable. No añade auto-reindex al arranque ni persistencia de vectors o embeddings.
+## Estado actual
 
-El sistema incluye un Audit Trail interno y fail-open para la trazabilidad segura de decisiones y ejecuciones; no es persistente ni una capacidad pública.
+Conversation Memory durable persiste turnos locales en SQLite y UI Foundation ofrece una interfaz Blazor WebAssembly same-origin bajo `/ui` para crear, borrar, leer y enviar conversaciones. La interfaz muestra health real de API y Ollama, pero no amplía la autoridad del backend.
 
-Kai puede iniciar Planner para acciones explícitas bajo policy. La aprobación de side effects continúa siendo una decisión externa; no hay agent loop ni autonomía.
+La plataforma también incluye Memory durable local, mantenimiento incremental eventual del índice semántico, retrieval híbrido con degradación controlada, RAG Pipeline, Conversation Context y Kai Agent Core v1. Kai puede orquestar Planner mediante contratos de alto nivel; las Tools y autorizaciones continúan separadas.
 
-## Propósito
+## Límites actuales
 
-KernelOS es una plataforma local-first para construir un asistente personal llamado Kai. Busca que la persona usuaria mantenga control sobre sus datos, modelos, acciones y permisos, sin acoplar las decisiones de producto a un proveedor concreto.
+No hay idempotencia HTTP durable, correlación persistente pending/conversation, indexación semántica de conversaciones, streaming, Markdown, acciones de confirmation desde UI, autenticación multiusuario, scheduler, proveedores cloud ni UI administrativa de Tools, Memory o Knowledge.
 
-## Visión
-
-KernelOS podrá ayudar a conversar, recuperar conocimiento personal, planificar trabajo y ejecutar acciones autorizadas. Esa evolución será gradual: una capacidad no se considera disponible hasta que sus fronteras de seguridad, contratos, pruebas y documentación existan.
+El historial durable vive en SQLite. Borradores, citas, metadata de respuesta, confirmations y respuestas parciales no persistidas viven solo en memoria del navegador y pueden desaparecer al recargar.
 
 ## Principios
 
-- Local-first y minimización de datos; cualquier proveedor remoto requerirá una decisión explícita.
+- Local-first y minimización de datos.
 - Los modelos no ejecutan acciones directamente: pasan por contratos, Tools y autorizaciones controladas.
 - Core no depende de Infrastructure, Api ni Tools; las integraciones quedan en los bordes.
 - Seguridad, mantenibilidad y revisión prevalecen sobre velocidad o automatización prematura.
 
-## Arquitectura conceptual
-
-La plataforma separa contratos independientes en Core, implementaciones y proveedores locales en Infrastructure, Tools como frontera de acciones y Api como borde HTTP. El flujo de conocimiento previsto es Filesystem autorizado → Document Readers → Knowledge → Memory → Retrieval → Context para Kai. Las capas existentes y sus límites se describen en la documentación de arquitectura.
-
-## Objetivos y no objetivos actuales
-
-El objetivo presente incluye Memory durable local, mantenimiento incremental eventual del índice semántico, retrieval híbrido con degradación controlada, RAG Pipeline interno, Conversation Context por request y Kai Agent Core v1 conservador. El historial reciente lo proporciona el caller; el mensaje actual permanece separado. Kai puede orquestar Planner para una Tool explícita, manteniendo la separación entre construir, autorizar y ejecutar: un plan multi-task completa autorización global antes de cualquier Tool, y sus approvals son acotadas, de un solo uso y se crean tras una confirmación API explícita sobre un snapshot. La ejecución sigue siendo secuencial y sin rollback externo. Conversation Memory entre sesiones, automatización general, proveedores cloud, UI, voz, visión y persistencia de Vector Index, embeddings, approvals, pending o audit siguen fuera del alcance actual.
-
-La evolución futura y sus dependencias se mantienen en el [Roadmap](docs/roadmap/roadmap.md), no en este documento.
+La evolución futura se mantiene en el [Roadmap](docs/roadmap/roadmap.md).

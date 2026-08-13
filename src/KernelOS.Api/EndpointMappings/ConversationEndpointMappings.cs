@@ -48,11 +48,11 @@ public static class ConversationEndpointMappings
             };
         });
 
-        app.MapGet("/conversations/{id:guid}/messages", async (Guid id, int? limit, int? offset, IConversationStore store, IOptions<ConversationMemoryOptions> options, CancellationToken cancellationToken) =>
+        app.MapGet("/conversations/{id:guid}/messages", async (Guid id, int? limit, int? offset, long? beforeSequence, IConversationStore store, IOptions<ConversationMemoryOptions> options, CancellationToken cancellationToken) =>
         {
             var requestedLimit = limit ?? 50; var requestedOffset = offset ?? 0;
             if (id == Guid.Empty || requestedLimit <= 0 || requestedLimit > options.Value.MaxMessagesPageSize || requestedOffset < 0) return Results.BadRequest(new { error = "Invalid conversation or paging parameters." });
-            var result = await store.GetMessagesAsync(new(id, requestedLimit, requestedOffset), cancellationToken);
+            var result = await store.GetMessagesAsync(new(id, requestedLimit, requestedOffset, beforeSequence), cancellationToken);
             return result.Status switch
             {
                 ConversationStatus.Success => Results.Ok(result.Messages!.Select(ToResponse)),

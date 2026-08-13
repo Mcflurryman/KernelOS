@@ -1,5 +1,7 @@
 # Kai Agent Core v1
 
+Kai conserva `/kai` stateless. Los turns durables pasan por `IConversationTurnOrchestrator`, que aporta historial previo a Chat y RAG; Planner permanece sin historial.
+
 Cada request de Kai crea un `AuditFlowId` interno y emite únicamente inicio y ruta seleccionada. El audit no registra mensaje, historial, respuesta ni contexto RAG.
 
 Kai Planner Orchestration permite Planner explícito sin acceso de Kai a router, Tools, approvals o pending stores. `RequiresConfirmation` se devuelve al caller y Deny es terminal.

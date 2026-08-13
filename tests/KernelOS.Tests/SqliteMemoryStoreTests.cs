@@ -46,7 +46,7 @@ public sealed class SqliteMemoryStoreTests
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT version FROM schema_version WHERE singleton = 1;";
 
-        Assert.Equal(1L, Convert.ToInt64(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture));
+        Assert.Equal(2L, Convert.ToInt64(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture));
         Assert.True(File.Exists(fixture.DatabasePath));
         Assert.True(Directory.Exists(fixture.Directory));
     }
@@ -58,7 +58,7 @@ public sealed class SqliteMemoryStoreTests
         await using (var connection = await fixture.Factory.OpenConnectionAsync())
         await using (var command = connection.CreateCommand())
         {
-            command.CommandText = "UPDATE schema_version SET version = 2 WHERE singleton = 1;";
+            command.CommandText = "UPDATE schema_version SET version = 3 WHERE singleton = 1;";
             await command.ExecuteNonQueryAsync();
         }
 

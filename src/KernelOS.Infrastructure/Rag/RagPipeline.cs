@@ -46,7 +46,7 @@ public sealed class RagPipeline : IRagPipeline
         if (context.Pack.Truncated) warnings.Add(new("RAG_CONTEXT_TRUNCATED", "Context selection reached a configured limit."));
 
         if (cancellationToken.IsCancellationRequested) return new(RagStatus.Cancelled);
-        var chat = await chatModel.SendAsync(promptBuilder.Build(request.Query, context.Pack), cancellationToken);
+        var chat = await chatModel.SendAsync(promptBuilder.Build(request.Query, context.Pack, request.History), cancellationToken);
         if (cancellationToken.IsCancellationRequested || string.Equals(chat.Error, "cancelled", StringComparison.Ordinal)) return new(RagStatus.Cancelled);
         if (!chat.Success) return new(RagStatus.Failed, Model: chat.Model);
         var citations = context.Pack.Citations.Select(citation => new RagCitation(citation.CitationId, citation.MemoryDocumentId, citation.MemoryItemId, citation.Source.SafeReference, citation.Source.DisplayReference)).ToArray();

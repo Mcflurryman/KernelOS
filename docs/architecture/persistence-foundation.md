@@ -1,5 +1,7 @@
 # Persistence Foundation
 
+Conversation es un dominio SQLite separado con tablas y contratos propios; no participa en Memory, Vector Index, embeddings, approvals, pending executions ni Audit Trail.
+
 > Memory durable puede alimentar un rebuild y, tras commit, el mantenimiento incremental del índice vectorial; vectors y embeddings permanecen volátiles. Véanse [Semantic Index Rebuild Foundation](semantic-index-rebuild.md) y [Semantic Index Maintenance Foundation](semantic-index-maintenance.md).
 
 Memory es la fuente durable de conocimiento normalizado de KernelOS. `KnowledgeDocument` llega desde Knowledge Core y `IMemoryStore` conserva el agregado `MemoryDocument`; no se expone un endpoint ni una Tool de Memory. En la creación actual, `MemoryDocument.Id` y `MemoryDocument.KnowledgeDocumentId` son ambos `KnowledgeDocument.Id`.

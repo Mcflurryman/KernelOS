@@ -1,5 +1,7 @@
 # RAG Pipeline Core
 
+Cuando Kai proporciona historial conversacional, RAG lo usa exclusivamente para generación; retrieval conserva la query actual.
+
 > RAG continúa con resultados `PartialSuccess` de Hybrid cuando contienen contexto utilizable.
 
 RAG Pipeline orquesta `IHybridSearchEngine`, `IContextBuilder`, `IRagPromptBuilder` e `IChatModel`. No conoce filesystem, Readers, índices vectoriales, embeddings, Tools ni Planner. El flujo es query → retrieval → ContextPack → prompt determinista → modelo → respuesta. La consistencia eventual del índice semántico se queda en retrieval; RAG no inspecciona ni modifica su estado de mantenimiento.

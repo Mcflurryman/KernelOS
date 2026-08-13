@@ -1,5 +1,7 @@
 # Arquitectura actual
 
+Conversation Memory es un dominio SQLite separado de Knowledge Memory. La API `/conversations` orquesta turnos durables con serialización por conversación; no indexa conversaciones ni altera Approval, Pending o Audit Trail.
+
 > Semantic Index Maintenance Foundation mantiene el índice derivado tras cada commit de Memory: `SQLite Memory → committed mutation → generation → bounded Channel → worker → ApplyFamilyPatchAsync`. El rebuild explícito sigue siendo la recuperación tras restart o estado `Dirty`.
 
 > Hybrid Search Graceful Degradation permite conservar retrieval lexical-only o semantic-only cuando la otra rama falla técnicamente; no selecciona providers ni altera el rebuild semántico.

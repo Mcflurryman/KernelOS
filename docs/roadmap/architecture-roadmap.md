@@ -1,5 +1,7 @@
 # Architecture Roadmap
 
+Persistent Conversation Memory (SQLite, API y turns serializados): ✅. Idempotencia durable, correlación pending/conversation, títulos, indexación semántica y UI continúan pendientes.
+
 ## Actualización de Retrieval
 
 - Semantic Index Rebuild Foundation desde Memory durable: ✅ (rebuild explícito y atómico por familia; vectors y embeddings siguen volátiles).

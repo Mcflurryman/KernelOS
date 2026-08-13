@@ -45,8 +45,8 @@ public sealed class KaiAgent(
         return decision.Mode switch
         {
             KaiMode.Planner => await PlanAsync(request, decision, auditContext, cancellationToken),
-            KaiMode.Rag => await RagAsync(request, decision, cancellationToken),
-            _ => await ChatAsync(request, decision, cancellationToken)
+            KaiMode.Rag => await RagAsync(request, decision, context.Pack, cancellationToken),
+            _ => await ChatAsync(request, decision, context.Pack, cancellationToken)
         };
     }
 
@@ -68,12 +68,12 @@ public sealed class KaiAgent(
         return new(execution.Status == PlannerStatus.Completed ? KaiStatus.Completed : execution.Status == PlannerStatus.Denied ? KaiStatus.Denied : execution.Status == PlannerStatus.Cancelled ? KaiStatus.Cancelled : KaiStatus.Failed, KaiMode.Planner, Decision: decision, PlanId: built.Plan.Id, Execution: execution);
     }
 
-    private async Task<KaiResponse> RagAsync(KaiRequest request, KaiDecision decision, CancellationToken cancellationToken)
+    private async Task<KaiResponse> RagAsync(KaiRequest request, KaiDecision decision, ConversationContextPack? pack, CancellationToken cancellationToken)
     {
-        var result = await rag.AnswerAsync(new(request.Message), cancellationToken);
+        var result = await rag.AnswerAsync(new(request.Message, History: ToChatHistory(pack)), cancellationToken);
         if (result.Status == RagStatus.NoContext && request.PreferredMode == KaiMode.Auto && options.AllowAutoRagFallbackToChat)
         {
-            var fallback = await ChatAsync(request, decision, cancellationToken);
+            var fallback = await ChatAsync(request, decision, pack, cancellationToken);
             return fallback with { Warnings = [new("KAI_RAG_NO_CONTEXT_FALLBACK", "No retrieved context; used chat.")] };
         }
         var status = result.Status switch
@@ -90,9 +90,10 @@ public sealed class KaiAgent(
         return new(status, KaiMode.Rag, result.Answer, result.Citations, warnings, result.Model, decision);
     }
 
-    private async Task<KaiResponse> ChatAsync(KaiRequest request, KaiDecision decision, CancellationToken cancellationToken)
+    private async Task<KaiResponse> ChatAsync(KaiRequest request, KaiDecision decision, ConversationContextPack? pack, CancellationToken cancellationToken)
     {
-        var response = await chat.SendAsync(new ChatRequest(request.Message!), cancellationToken);
+        var response = await chat.SendAsync(new ChatRequest(request.Message!, history: ToChatHistory(pack)), cancellationToken);
         return new(response.Success ? KaiStatus.Success : KaiStatus.ProviderUnavailable, KaiMode.Chat, response.Message, Decision: decision);
     }
+    private static ChatMessage[] ToChatHistory(ConversationContextPack? pack) => pack?.Items.Select(item => new ChatMessage(item.Role == ConversationRole.User ? "user" : "assistant", item.Content)).ToArray() ?? [];
 }

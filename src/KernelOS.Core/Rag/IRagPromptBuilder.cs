@@ -5,5 +5,5 @@ namespace KernelOS.Core.Rag;
 
 public interface IRagPromptBuilder
 {
-    ChatRequest Build(string query, ContextPack contextPack);
+    ChatRequest Build(string query, ContextPack contextPack, IReadOnlyCollection<ChatMessage>? history = null);
 }

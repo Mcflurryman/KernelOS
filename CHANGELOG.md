@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Persistent Conversation Memory: SQLite conversation store, turns serializados, historial para Chat/RAG, API `/conversations` y continuidad tras reinicio.
+- ADR 0034 y arquitectura de Conversation Memory; sin idempotencia durable, indexación semántica, títulos ni follow-up automático de pending executions.
+
 - Semantic Index Maintenance Foundation: mutaciones de Memory posteriores a commit, generaciones coherentes, cola bounded y worker secuencial para aplicar patches atómicos por familia. Ante overflow, fallo o inconsistencias, el índice pasa a `Dirty` y requiere rebuild explícito; no incorpora outbox durable, auto-startup ni persistencia vectorial.
 - ADR 0033 y documentación de mantenimiento del índice semántico.
 

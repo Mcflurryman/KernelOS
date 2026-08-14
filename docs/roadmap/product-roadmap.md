@@ -11,6 +11,7 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - UI web local para crear, borrar, leer y enviar conversaciones bajo `/ui`: ✅
 - Citas y metadata visibles en UI: 🟡 (transitorias, no persistidas)
 - Streaming, Markdown, adjuntos y búsqueda/administración visible de Memory/Knowledge: ⬜
+- Conversation Pending Correlation + Confirmation Actions: ✅; Pending/Approval siguen volátiles tras restart.
 
 ## Actions and automation
 

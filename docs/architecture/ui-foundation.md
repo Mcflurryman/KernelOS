@@ -22,7 +22,7 @@ El estado transitorio de página incluye borrador, envío, warnings, metadata de
 
 La UI usa el lenguaje HUD/cian de KernelOS: KaiCore deriva su aspecto del estado del turn (`Idle`, `Sending`, `Success`, `Partial`, `Confirmation`, `Cancelled`, `Failed` o `Uncertain`). El composer envía con Enter, permite salto de línea con Shift+Enter y bloquea envíos vacíos o simultáneos. Los mensajes son texto plano mostrado como texto, sin renderer Markdown ni HTML raw.
 
-`PartialSuccess` puede mostrar una respuesta temporal marcada como no persistida. `ConfirmationRequired` muestra información pública de riesgo, razón y expiración cuando la API la aporta, pero no incorpora botones para aprobar, rechazar ni ejecutar. La health strip informa solo API y Ollama mediante endpoints reales, sin polling agresivo; Ollama offline no bloquea el composer porque el backend conserva la autoridad sobre sus fallbacks.
+`PartialSuccess` puede mostrar una respuesta temporal marcada como no persistida. `ConfirmationRequired` se recupera por correlación durable y ofrece Approve/Reject explícitos; tras Approve, Execute es una segunda acción explícita. No hay reintentos automáticos y el resultado seguro de ejecución es transitorio. Si el backend se reinicia, Pending desaparece y la UI muestra `Unavailable`. La health strip informa solo API y Ollama mediante endpoints reales, sin polling agresivo.
 
 La base visual respeta `prefers-reduced-motion`, mantiene navegación y controles semánticos y no carga CDN, fuentes remotas, analytics ni telemetría.
 
@@ -30,4 +30,4 @@ La base visual respeta `prefers-reduced-motion`, mantiene navegación y controle
 
 Los perfiles de lanzamiento usan `localhost`, pero el binding final puede cambiar mediante `ASPNETCORE_URLS` o configuración externa. `AllowedHosts=*` no fuerza un binding local. Los despliegues deben fijar explícitamente la interfaz de escucha y la exposición de red; la UI no convierte por sí misma una instalación en localhost-only.
 
-No hay autenticación multiusuario, idempotencia durable, correlación persistente de pending con conversación, streaming, adjuntos, Markdown, herramientas visuales ni administración de Memory/Knowledge en esta fase.
+No hay autenticación multiusuario, idempotencia durable, persistencia de Pending/Approval o de estados terminales, streaming, adjuntos, Markdown, herramientas visuales ni administración de Memory/Knowledge en esta fase. La correlación durable conserva sólo identidad UX entre conversación y pending runtime.

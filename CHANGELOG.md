@@ -1,5 +1,11 @@
 # Changelog
 
+## Conversation Pending Correlation + Confirmation Actions
+
+- Added schema v3 identity-only conversation/pending correlation and safe discovery API.
+- Added explicit UI approve, reject and execute actions with safe HTTP DTOs and transient results.
+- Pending, approvals and terminal execution status remain volatile across backend restart.
+
 ## Unreleased
 
 - UI Foundation: Blazor WebAssembly alojado bajo `/ui`, interfaz HUD para conversaciones persistentes, deep links, create/delete/send, paginación, health de API/Ollama y feedback seguro de PartialSuccess, confirmation y entrega incierta.

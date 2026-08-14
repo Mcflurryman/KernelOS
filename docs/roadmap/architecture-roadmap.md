@@ -19,7 +19,8 @@ Estados: ✅ Implementado · 🟡 En progreso · ⬜ Pendiente · ⚪ Diseñado 
 - Persistent Conversation Memory: SQLite, API, turns serializados, historial acotado y paginación por secuencia: ✅
 - UI Foundation: Blazor WebAssembly alojado por KernelOS.Api bajo `/ui`, same-origin, deep links, conversaciones, health y feedback seguro de turns: ✅
 - Idempotencia durable, títulos, indexación semántica de conversaciones y correlación pending/conversation persistente: ⬜
-- Streaming, Markdown, adjuntos, confirmation actions, Tools UI, Memory UI y autenticación: ⬜
+- Streaming, Markdown, adjuntos, Tools UI, Memory UI y autenticación: ⬜
+- Conversation Pending Correlation + Confirmation Actions: ✅ (sin Pending/Approval durable ni historial terminal durable).
 
 ## Automation
 

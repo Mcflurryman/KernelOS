@@ -8,7 +8,7 @@ Kai conversa localmente con Ollama, puede aplicar RAG interno y orquestar Planne
 
 Están implementados chat local mediante Ollama, Tool System, Planner con planificación, autorización y ejecución separadas, Filesystem Read Only, Document Readers, Knowledge Core, Memory durable local, retrieval híbrido, Context Builder, RAG Pipeline, Conversation Context, Kai Agent Core y Conversation Memory durable.
 
-UI Foundation ofrece conversaciones bajo `/ui`: crear, borrar, navegar mediante deep links, leer historial, enviar turnos, ver estados de Kai y health de API/Ollama. La UI no tiene streaming, Markdown, acciones de confirmation, autenticación, adjuntos ni almacenamiento de borradores en el navegador.
+UI Foundation ofrece conversaciones bajo `/ui`: crear, borrar, navegar mediante deep links, leer historial, enviar turnos, ver estados de Kai y health de API/Ollama. Las confirmations se recuperan tras refresh y permiten aprobar, rechazar y ejecutar explícitamente en dos pasos. Pending y approvals siguen siendo process-bound: tras reiniciar backend quedan no disponibles.
 
 ## Uso local
 

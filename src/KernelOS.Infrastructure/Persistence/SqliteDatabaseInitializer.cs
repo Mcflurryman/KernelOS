@@ -5,11 +5,12 @@ namespace KernelOS.Infrastructure.Persistence;
 
 public sealed class SqliteDatabaseInitializer(PersistencePathResolver paths, ISqliteConnectionFactory connections) : ISqliteDatabaseInitializer
 {
-    private const int CurrentVersion = 2;
+    private const int CurrentVersion = 3;
     private static readonly IReadOnlyList<string> MigrationResources =
     [
         "KernelOS.Infrastructure.Persistence.Migrations.001_initial.sql",
-        "KernelOS.Infrastructure.Persistence.Migrations.002_conversation_memory.sql"
+        "KernelOS.Infrastructure.Persistence.Migrations.002_conversation_memory.sql",
+        "KernelOS.Infrastructure.Persistence.Migrations.003_conversation_pending_correlation.sql"
     ];
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)

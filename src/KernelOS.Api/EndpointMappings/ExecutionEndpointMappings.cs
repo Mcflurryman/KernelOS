@@ -14,7 +14,7 @@ public static class ExecutionEndpointMappings
             CancellationToken cancellationToken) =>
         {
             var result = await confirmations.GetAsync(id, cancellationToken);
-            return result is null ? Results.NotFound() : Results.Ok(result);
+            return result is null ? Results.NotFound() : Results.Ok(ToResponse(result));
         });
 
         app.MapPost("/execution/confirmations/{id:guid}", async (
@@ -32,8 +32,8 @@ public static class ExecutionEndpointMappings
             return result is null
                 ? Results.NotFound()
                 : !result.Transitioned
-                    ? Results.Conflict(result)
-                    : Results.Ok(result);
+                    ? Results.Conflict(ToResponse(result))
+                    : Results.Ok(ToResponse(result));
         });
 
         app.MapPost("/execution/pending/{id:guid}/execute", async (
@@ -59,14 +59,18 @@ public static class ExecutionEndpointMappings
                 cancellationToken);
             return result.Status switch
             {
-                PlannerStatus.Completed => Results.Ok(result),
-                PlannerStatus.Denied => Results.Json(result, statusCode: StatusCodes.Status403Forbidden),
-                PlannerStatus.RequiresConfirmation => Results.Json(result, statusCode: StatusCodes.Status409Conflict),
-                PlannerStatus.Cancelled => Results.Json(result, statusCode: 499),
-                _ => Results.BadRequest(result)
+                PlannerStatus.Completed => Results.Ok(ToResponse(result)),
+                PlannerStatus.Denied => Results.Json(ToResponse(result), statusCode: StatusCodes.Status403Forbidden),
+                PlannerStatus.RequiresConfirmation => Results.Json(ToResponse(result), statusCode: StatusCodes.Status409Conflict),
+                PlannerStatus.Cancelled => Results.Json(ToResponse(result), statusCode: 499),
+                _ => Results.BadRequest(ToResponse(result))
             };
         });
 
         return app;
     }
+
+    private static ExecutionConfirmationApiResponse ToResponse(ExecutionConfirmationResult result) => new(result.Status, ToResponse(result.Confirmation), result.Transitioned);
+    private static ExecutionConfirmationPublicApiResponse? ToResponse(ExecutionConfirmationRequest? confirmation) => confirmation is null ? null : new(confirmation.PendingExecutionId, confirmation.Description, confirmation.RiskLevel, confirmation.Reason, confirmation.SafeArgumentSummary, confirmation.ExpiresAt, confirmation.TaskCount);
+    private static ExecutionApiResponse ToResponse(PlannerResult result) => new(result.Status, result.Plan?.Tasks.Count(task => task.Status == PlannerStatus.Completed) ?? 0, result.Plan?.Tasks.Count ?? 0, result.Error?.Code);
 }

@@ -28,6 +28,8 @@ internal static class ConversationInfrastructureServiceCollectionExtensions
             .ValidateOnStart();
         services.AddSingleton<SqliteConversationStore>();
         services.AddSingleton<IConversationStore>(provider => provider.GetRequiredService<SqliteConversationStore>());
+        services.AddSingleton<IConversationExecutionCorrelationStore, SqliteConversationExecutionCorrelationStore>();
+        services.AddSingleton<IConversationPendingExecutionQueryService, ConversationPendingExecutionQueryService>();
         services.AddSingleton<IConversationTurnOrchestrator, ConversationTurnOrchestrator>();
 
         return services;

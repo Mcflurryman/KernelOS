@@ -1,17 +1,24 @@
 @using KernelOS.Web.Conversations
 
-<HudPanel Label="CONFIRMATION REQUIRED" PanelClass="warning-panel">
-    <p>@Message</p>
-    @if (Confirmation is not null)
+<HudPanel Label="@Label" PanelClass="@PanelClass">
+    <p aria-live="polite">@Message</p>
+    @if (Pending.Confirmation is not null)
     {
-        <p class="status-detail">RISK // @Confirmation.RiskLevel · REASON // @Confirmation.Reason</p>
-        @if (!string.IsNullOrWhiteSpace(Confirmation.SafeArgumentSummary)) { <p>@Confirmation.SafeArgumentSummary</p> }
-        @if (Confirmation.ExpiresAt is not null) { <p class="status-detail">EXPIRES // @Confirmation.ExpiresAt.Value.LocalDateTime.ToString("g")</p> }
+        <p class="status-detail">RISK // @Pending.Confirmation.RiskLevel · REASON // @Pending.Confirmation.Reason</p>
+        @if (Pending.Confirmation.ExpiresAt is not null) { <p class="status-detail">EXPIRES // @Pending.Confirmation.ExpiresAt.Value.LocalDateTime.ToString("g")</p> }
     }
-    <p class="status-detail">ACTION PAUSED // WAITING FOR AUTHORIZATION</p>
+    @if (State == ConfirmationUiState.Pending) { <div class="button-row"><button class="hud-button" aria-label="Approve confirmation" @onclick="OnApprove" disabled="@Busy">APPROVE</button><button class="hud-button hud-button--danger" aria-label="Reject confirmation" @onclick="OnReject" disabled="@Busy">REJECT</button></div> }
+    @if (State == ConfirmationUiState.Approved) { <div class="button-row"><button class="hud-button" aria-label="Execute approved action" @onclick="OnExecute" disabled="@Busy">EXECUTE</button></div> }
 </HudPanel>
 
 @code {
-    [Parameter, EditorRequired] public string Message { get; set; } = string.Empty;
-    [Parameter] public ConfirmationDto? Confirmation { get; set; }
+    [Parameter, EditorRequired] public ConversationPendingExecutionDto Pending { get; set; } = default!;
+    [Parameter] public ConfirmationUiState State { get; set; }
+    [Parameter] public EventCallback OnApprove { get; set; }
+    [Parameter] public EventCallback OnReject { get; set; }
+    [Parameter] public EventCallback OnExecute { get; set; }
+    private bool Busy => State is ConfirmationUiState.Approving or ConfirmationUiState.Rejecting or ConfirmationUiState.Executing;
+    private string Label => State switch { ConfirmationUiState.Approved => "AUTHORIZED", ConfirmationUiState.Rejected => "REJECTED", ConfirmationUiState.Unavailable => "UNAVAILABLE", ConfirmationUiState.ExecutedTransient => "EXECUTION COMPLETED", _ => "CONFIRMATION REQUIRED" };
+    private string Message => State switch { ConfirmationUiState.Approved => "Authorization completed. Execution still requires an explicit action.", ConfirmationUiState.Rejected => "This action was rejected.", ConfirmationUiState.Unavailable => "This confirmation is no longer available. Request the action again.", ConfirmationUiState.Uncertain => "The action state is uncertain. Refresh before trying again.", _ => Pending.Confirmation?.Description ?? "Action paused while confirmation is required." };
+    private string PanelClass => State is ConfirmationUiState.Rejected ? "state-panel state-panel--error" : State is ConfirmationUiState.Unavailable ? "state-panel" : "warning-panel";
 }

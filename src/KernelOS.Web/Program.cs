@@ -13,6 +13,7 @@ builder.Services.AddScoped(_ => new HttpClient
     BaseAddress = new Uri(new Uri(builder.HostEnvironment.BaseAddress), "/")
 });
 builder.Services.AddScoped<ConversationApiClient>();
+builder.Services.AddScoped<KernelOS.Web.Execution.ExecutionApiClient>();
 builder.Services.AddScoped<ConversationUiNotifier>();
 builder.Services.AddScoped<HealthApiClient>();
 

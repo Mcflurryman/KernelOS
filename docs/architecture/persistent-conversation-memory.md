@@ -10,4 +10,4 @@ Conversation Context aplica el presupuesto final. Chat recibe roles preservados 
 
 La API expone create/list/get/messages/send/delete. KernelOS.Web consume esta API desde `/ui` y reconcilia el historial durable desde SQLite tras cada turn. Las respuestas parciales no persistidas, citas, metadata y confirmations son estado transitorio de UI. `/kai` y `/chat` permanecen stateless.
 
-El contenido se guarda en SQLite local sin cifrado a nivel de aplicación; los logs y Audit Trail no almacenan conversación. No hay idempotencia durable, correlación pending/conversation posterior a confirmación, títulos, indexación semántica, promoción a Knowledge, streaming, Markdown ni acciones de confirmation desde UI.
+El contenido se guarda en SQLite local sin cifrado a nivel de aplicación; los logs y Audit Trail no almacenan conversación. La identidad Conversation↔Pending se conserva separadamente para recuperar confirmation UI, pero Pending/Approval siguen runtime-only y una correlación tras restart es `Unavailable`. No hay idempotencia durable, títulos, indexación semántica, promoción a Knowledge, streaming ni Markdown.

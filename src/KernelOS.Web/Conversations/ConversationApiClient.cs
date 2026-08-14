@@ -25,6 +25,9 @@ public sealed class ConversationApiClient(HttpClient httpClient)
     public Task<ConversationApiResult<IReadOnlyList<ConversationMessageDto>>> GetMessagesAsync(Guid conversationId, CancellationToken cancellationToken) =>
         GetMessagesAsync(conversationId, null, cancellationToken);
 
+    public Task<ConversationApiResult<IReadOnlyList<ConversationPendingExecutionDto>>> GetPendingExecutionsAsync(Guid conversationId, int offset = 0, CancellationToken cancellationToken = default) =>
+        GetListAsync<ConversationPendingExecutionDto>($"conversations/{conversationId:D}/pending-executions?limit={PageSize}&offset={offset}", cancellationToken);
+
     public Task<ConversationApiResult<ConversationSummaryDto>> CreateConversationAsync(CancellationToken cancellationToken = default) =>
         SendAsync<ConversationSummaryDto>(HttpMethod.Post, "conversations", null, cancellationToken);
 

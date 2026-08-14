@@ -1,5 +1,6 @@
 using KernelOS.Api.Contracts;
 using KernelOS.Core.Conversation;
+using KernelOS.Core.Execution;
 using KernelOS.Core.Kai;
 using KernelOS.Infrastructure.Conversation;
 using Microsoft.Extensions.Options;
@@ -63,6 +64,21 @@ public static class ConversationEndpointMappings
             };
         });
 
+        app.MapGet("/conversations/{id:guid}/pending-executions", async (Guid id, int? limit, int? offset, IConversationPendingExecutionQueryService pendingExecutions, IOptions<ConversationMemoryOptions> options, CancellationToken cancellationToken) =>
+        {
+            var requestedLimit = limit ?? 50; var requestedOffset = offset ?? 0;
+            if (id == Guid.Empty || requestedLimit <= 0 || requestedLimit > options.Value.MaxListPageSize || requestedOffset < 0) return Results.BadRequest(new { error = "Invalid conversation or paging parameters." });
+            var result = await pendingExecutions.ListByConversationAsync(new(id, requestedLimit, requestedOffset), cancellationToken);
+            return result.Status switch
+            {
+                ConversationPendingExecutionQueryStatus.Success => Results.Ok(result.PendingExecutions!.Select(ToResponse)),
+                ConversationPendingExecutionQueryStatus.NotFound => Results.NotFound(),
+                ConversationPendingExecutionQueryStatus.Cancelled => Results.Json(new { error = "Request cancelled." }, statusCode: 499),
+                ConversationPendingExecutionQueryStatus.InvalidRequest => Results.BadRequest(new { error = "Pending executions could not be loaded." }),
+                _ => Results.Json(new { error = "Pending executions could not be loaded." }, statusCode: StatusCodes.Status500InternalServerError)
+            };
+        });
+
         app.MapPost("/conversations/{id:guid}/messages", async (Guid id, ConversationTurnApiRequest? request, IConversationTurnOrchestrator turns, CancellationToken cancellationToken) =>
         {
             if (id == Guid.Empty || request is null) return Results.BadRequest();
@@ -98,6 +114,9 @@ public static class ConversationEndpointMappings
 
     private static ConversationApiResponse ToResponse(Conversation conversation) => new(conversation.Id, conversation.CreatedAt, conversation.UpdatedAt, conversation.Version);
     private static ConversationMessageApiResponse ToResponse(ConversationMessage message) => new(message.Id, message.ConversationId, message.Sequence, message.Role == ConversationRole.User ? "user" : "assistant", message.Content, message.CreatedAt);
+    private static ConversationPendingExecutionApiResponse ToResponse(ConversationPendingExecution pending) => new(pending.PendingExecutionId, pending.UserMessageId, pending.AssistantMessageId, pending.CreatedAt, pending.Status, ToResponse(pending.PendingExecutionId, pending.Confirmation));
+    private static ExecutionConfirmationPublicApiResponse? ToResponse(Guid pendingExecutionId, ConversationPendingExecutionConfirmation? confirmation) => confirmation is null ? null : new(pendingExecutionId, confirmation.Description, confirmation.RiskLevel, confirmation.Reason, confirmation.SafeArgumentSummary, confirmation.ExpiresAt, confirmation.TaskCount);
+    private static ExecutionConfirmationPublicApiResponse? ToResponse(ExecutionConfirmationRequest? confirmation) => confirmation is null ? null : new(confirmation.PendingExecutionId, confirmation.Description, confirmation.RiskLevel, confirmation.Reason, confirmation.SafeArgumentSummary, confirmation.ExpiresAt, confirmation.TaskCount);
     private static ConversationTurnApiResponse ToResponse(ConversationTurnResult result)
     {
         var kai = result.KaiResponse;

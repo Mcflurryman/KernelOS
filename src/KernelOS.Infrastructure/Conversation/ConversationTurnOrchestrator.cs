@@ -4,7 +4,11 @@ using Microsoft.Extensions.Logging;
 
 namespace KernelOS.Infrastructure.Conversation;
 
-public sealed class ConversationTurnOrchestrator(IConversationStore store, IKaiAgent kai, ILogger<ConversationTurnOrchestrator> logger) : IConversationTurnOrchestrator
+public sealed class ConversationTurnOrchestrator(
+    IConversationStore store,
+    IKaiAgent kai,
+    IConversationExecutionCorrelationStore correlations,
+    ILogger<ConversationTurnOrchestrator> logger) : IConversationTurnOrchestrator
 {
     private readonly Dictionary<Guid, GateEntry> gates = [];
     private readonly object gatesLock = new();
@@ -24,19 +28,43 @@ public sealed class ConversationTurnOrchestrator(IConversationStore store, IKaiA
             if (history.Status != ConversationStatus.Success) return new(Map(history.Status), request.ConversationId, user.Message.Id, ErrorCode: "CONVERSATION_HISTORY_UNAVAILABLE");
             var turns = history.Messages!.Select(message => new ConversationTurn(message.Id, message.Role, message.Content, message.CreatedAt)).ToArray();
             var response = await kai.HandleAsync(new(request.Message, turns, request.PreferredMode, request.ToolName, request.Arguments), cancellationToken);
+            Guid? assistantMessageId = null;
+            var status = Map(response.Status);
+            string? errorCode = null;
             if (!ShouldPersist(response))
             {
-                return response.Status is KaiStatus.Success or KaiStatus.PartialSuccess
-                    ? new(ConversationTurnStatus.PartialSuccess, request.ConversationId, user.Message.Id, KaiResponse: response, ErrorCode: "CONVERSATION_ASSISTANT_RESPONSE_INVALID")
-                    : new(Map(response.Status), request.ConversationId, user.Message.Id, KaiResponse: response);
+                if (response.Status is KaiStatus.Success or KaiStatus.PartialSuccess)
+                {
+                    status = ConversationTurnStatus.PartialSuccess;
+                    errorCode = "CONVERSATION_ASSISTANT_RESPONSE_INVALID";
+                }
             }
-            var assistant = await store.AppendMessageAsync(new(request.ConversationId, ConversationRole.Assistant, response.Answer), cancellationToken);
-            if (assistant.Status != ConversationStatus.Success)
+            else
             {
-                ConversationTurnLog.AssistantPersistenceFailed(logger);
-                return new(ConversationTurnStatus.PartialSuccess, request.ConversationId, user.Message.Id, KaiResponse: response, ErrorCode: "CONVERSATION_ASSISTANT_PERSISTENCE_FAILED");
+                var assistant = await store.AppendMessageAsync(new(request.ConversationId, ConversationRole.Assistant, response.Answer), cancellationToken);
+                if (assistant.Status != ConversationStatus.Success)
+                {
+                    ConversationTurnLog.AssistantPersistenceFailed(logger);
+                    status = ConversationTurnStatus.PartialSuccess;
+                    errorCode = "CONVERSATION_ASSISTANT_PERSISTENCE_FAILED";
+                }
+                else
+                {
+                    assistantMessageId = assistant.Message!.Id;
+                }
             }
-            return new(Map(response.Status), request.ConversationId, user.Message.Id, assistant.Message!.Id, response);
+
+            if (IsConfirmation(response))
+            {
+                var correlation = await RegisterCorrelationAsync(request.ConversationId, user.Message.Id, assistantMessageId, response.PendingExecutionId!.Value, cancellationToken);
+                if (correlation is not null)
+                {
+                    response = response with { Warnings = [.. (response.Warnings ?? []), correlation] };
+                    errorCode ??= correlation.Code;
+                }
+            }
+
+            return new(status, request.ConversationId, user.Message.Id, assistantMessageId, response, errorCode);
         }
         catch (OperationCanceledException) { return new(ConversationTurnStatus.Cancelled, request.ConversationId); }
         catch { ConversationTurnLog.Failed(logger); return new(ConversationTurnStatus.Failed, request.ConversationId, ErrorCode: "CONVERSATION_TURN_FAILED"); }
@@ -47,6 +75,23 @@ public sealed class ConversationTurnOrchestrator(IConversationStore store, IKaiA
 
     private static bool ShouldPersist(KaiResponse response) => IsAssistantEligible(response) && !string.IsNullOrWhiteSpace(response.Answer);
     private static bool IsAssistantEligible(KaiResponse response) => response.Status is KaiStatus.Success or KaiStatus.PartialSuccess or KaiStatus.RequiresConfirmation;
+    private static bool IsConfirmation(KaiResponse response) => response.Status == KaiStatus.RequiresConfirmation && response.PendingExecutionId is { } id && id != Guid.Empty;
+    private async Task<KaiWarning?> RegisterCorrelationAsync(Guid conversationId, Guid userMessageId, Guid? assistantMessageId, Guid pendingExecutionId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await correlations.RegisterAsync(new(pendingExecutionId, conversationId, userMessageId, assistantMessageId), cancellationToken);
+            return result.Status switch
+            {
+                ConversationExecutionCorrelationStatus.Success => null,
+                ConversationExecutionCorrelationStatus.Conflict => CorrelationWarning("CONVERSATION_PENDING_CORRELATION_CONFLICT"),
+                _ => CorrelationWarning("CONVERSATION_PENDING_CORRELATION_FAILED")
+            };
+        }
+        catch (OperationCanceledException) { return CorrelationWarning("CONVERSATION_PENDING_CORRELATION_FAILED"); }
+        catch { ConversationTurnLog.CorrelationFailed(logger); return CorrelationWarning("CONVERSATION_PENDING_CORRELATION_FAILED"); }
+    }
+    private static KaiWarning CorrelationWarning(string code) => new(code, "The action remains pending, but its conversation link could not be saved.");
     private static ConversationTurnStatus Map(ConversationStatus status) => status switch { ConversationStatus.NotFound => ConversationTurnStatus.NotFound, ConversationStatus.InvalidRequest => ConversationTurnStatus.InvalidRequest, ConversationStatus.Cancelled => ConversationTurnStatus.Cancelled, _ => ConversationTurnStatus.Failed };
     private static ConversationTurnStatus Map(KaiStatus status) => status switch { KaiStatus.Success or KaiStatus.Completed => ConversationTurnStatus.Success, KaiStatus.PartialSuccess => ConversationTurnStatus.PartialSuccess, KaiStatus.RequiresConfirmation => ConversationTurnStatus.ConfirmationRequired, KaiStatus.NoContext => ConversationTurnStatus.NoContext, KaiStatus.Cancelled => ConversationTurnStatus.Cancelled, _ => ConversationTurnStatus.Failed };
     private async Task<GateLease> AcquireAsync(Guid id, CancellationToken token)
@@ -84,4 +129,6 @@ internal static partial class ConversationTurnLog
     internal static partial void AssistantPersistenceFailed(ILogger logger);
     [LoggerMessage(Level = LogLevel.Warning, Message = "Conversation turn failed.")]
     internal static partial void Failed(ILogger logger);
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Conversation pending correlation registration failed.")]
+    internal static partial void CorrelationFailed(ILogger logger);
 }

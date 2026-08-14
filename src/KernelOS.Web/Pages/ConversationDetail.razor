@@ -1,6 +1,7 @@
 @page "/conversations/{ConversationId:guid}"
 @implements IDisposable
 @inject ConversationApiClient ConversationClient
+@inject KernelOS.Web.Execution.ExecutionApiClient ExecutionClient
 @inject ConversationUiNotifier ConversationNotifier
 @inject NavigationManager NavigationManager
 <PageTitle>KernelOS · Conversation</PageTitle>
@@ -18,14 +19,15 @@ else
 {
     <section class="conversation-view" aria-labelledby="conversation-title">
         <header class="conversation-header"><div><p class="hud-label">CONVERSATION // @ShortId(conversation!.Id)</p><h1 id="conversation-title">PERSISTENT CONTEXT</h1></div><div class="conversation-actions"><p class="conversation-meta">UPDATED <time datetime="@conversation.UpdatedAt.ToString("O")">@conversation.UpdatedAt.LocalDateTime.ToString("g")</time></p><button class="hud-button hud-button--danger" @onclick="ShowDeleteConfirmation" disabled="@isSending">DELETE</button></div></header>
-        @if (showDeleteConfirmation) { <HudPanel Label="DELETE CONVERSATION" PanelClass="confirmation-panel"><p>This permanently removes the conversation and its messages.</p><div class="button-row"><button class="hud-button hud-button--danger" @onclick="DeleteConversationAsync" disabled="@isDeleting">@(isDeleting ? "DELETING" : "DELETE")</button><button class="hud-button" @onclick="CancelDelete" disabled="@isDeleting">CANCEL</button></div>@if (actionMessage is not null) { <p class="error" role="alert">@actionMessage</p> }</HudPanel> }
-        @if (confirmation is not null) { <HudPanel Label="CONFIRMATION REQUIRED" PanelClass="warning-panel"><p>@confirmation</p>@if (confirmationDetails is not null) { <p class="status-detail">RISK // @confirmationDetails.RiskLevel · REASON // @confirmationDetails.Reason</p><p>@confirmationDetails.SafeArgumentSummary</p> }<p class="status-detail">ACTION PAUSED // WAITING FOR AUTHORIZATION</p></HudPanel> }
+        @if (showDeleteConfirmation) { <HudPanel Label="DELETE CONVERSATION" PanelClass="confirmation-panel"><p>This permanently removes the conversation and its messages.</p>@if (HasActivePending) { <p class="error">Deleting this conversation does not cancel pending actions.</p> }<div class="button-row"><button class="hud-button hud-button--danger" @onclick="DeleteConversationAsync" disabled="@isDeleting">@(isDeleting ? "DELETING" : "DELETE")</button><button class="hud-button" @onclick="CancelDelete" disabled="@isDeleting">CANCEL</button></div>@if (actionMessage is not null) { <p class="error" role="alert">@actionMessage</p> }</HudPanel> }
+        @if (confirmation is not null && !pendingExecutions.Any(item => item.PendingExecutionId == pendingExecutionId)) { <HudPanel Label="CONFIRMATION REQUIRED" PanelClass="warning-panel"><p>@confirmation</p>@if (confirmationDetails is not null) { <p class="status-detail">RISK // @confirmationDetails.RiskLevel · REASON // @confirmationDetails.Reason</p><p>@confirmationDetails.SafeArgumentSummary</p> }<p class="status-detail">ACTION PAUSED // WAITING FOR AUTHORIZATION</p></HudPanel> }
         @if (actionMessage is not null && !showDeleteConfirmation) { <HudPanel Label="TURN STATUS" PanelClass="@(sendState is ConversationSendState.Partial or ConversationSendState.Confirmation ? "warning-panel" : "state-panel state-panel--error")"><p role="alert">@actionMessage</p></HudPanel> }
+        @if (executionResult is not null) { <HudPanel Label="EXECUTION RESULT" PanelClass="state-panel"><p role="status">@executionResult</p></HudPanel> }
         <div class="conversation-core"><KaiCore State="@CoreState" /><p class="core-status" aria-live="polite"><span aria-hidden="true"></span>@StatusLabel</p></div>
         @if (hasOlder) { <button class="load-older" @onclick="LoadOlderAsync" disabled="@isLoadingOlder">@(isLoadingOlder ? "LOADING EARLIER MESSAGES" : "LOAD OLDER")</button> }
         @if (messages.Count == 0) { <HudPanel Label="MESSAGE STREAM" PanelClass="empty-conversation"><p class="empty-state">Start a conversation with Kai.</p></HudPanel> }
         else { <ol class="message-list" aria-label="Conversation messages">
-            @foreach (var message in messages) { <li class="message message--@message.Role"><div class="message-header"><p class="message-role">@(message.Role == "user" ? "USER" : "KAI")</p><p class="message-sequence">SEQ @message.Sequence.ToString("D3")</p></div><p class="message-content">@message.Content</p><time datetime="@message.CreatedAt.ToString("O")">@message.CreatedAt.LocalDateTime.ToString("g")</time></li> }
+            @foreach (var message in messages) { <li class="message message--@message.Role"><div class="message-header"><p class="message-role">@(message.Role == "user" ? "USER" : "KAI")</p><p class="message-sequence">SEQ @message.Sequence.ToString("D3")</p></div><p class="message-content">@message.Content</p><time datetime="@message.CreatedAt.ToString("O")">@message.CreatedAt.LocalDateTime.ToString("g")</time></li>@foreach (var pending in PendingFor(message)) { <li class="confirmation-inline"><ConfirmationPanel Pending="@pending" State="@StateFor(pending)" OnApprove="@(() => ApproveAsync(pending))" OnReject="@(() => RejectAsync(pending))" OnExecute="@(() => ExecuteAsync(pending))" /></li> } }
             @if (transientAnswer is not null) { <li class="message message--assistant message--transient"><div class="message-header"><p class="message-role">KAI // NOT PERSISTED</p><p class="message-sequence">PARTIAL RESPONSE</p></div><p class="message-content">@transientAnswer</p></li> }
         </ol> }
         @if (lastResponseDuration is not null || lastMode is not null || lastModel is not null) { <p class="turn-metadata">@if (lastMode is not null) { <span>@lastMode</span> } @if (lastModel is not null) { <span>@lastModel</span> } @if (lastResponseDuration is not null) { <span>@lastResponseDuration.Value.TotalSeconds.ToString("0.0")s</span> }</p> }
@@ -33,8 +35,8 @@ else
         @if (lastCitations.Count > 0) { <HudPanel Label="SOURCES" PanelClass="sources-panel"><ul class="turn-list">@foreach (var citation in lastCitations) { <li>@citation</li> }</ul></HudPanel> }
         <form class="composer" @onsubmit="SendAsync">
             <label class="hud-label" for="composer-input">KAI INPUT</label>
-            <textarea id="composer-input" @ref="composerElement" @bind="draft" @bind:event="oninput" @onkeydown="HandleComposerKeyDown" @onkeydown:preventDefault="true" placeholder="Ask Kai..." aria-label="Message for Kai" disabled="@isSending"></textarea>
-            <div class="composer-footer"><span>MODE // AUTO</span><button class="hud-button" type="submit" disabled="@isSending || string.IsNullOrWhiteSpace(draft)">@(isSending ? "PROCESSING" : "SEND")</button></div>
+            <textarea id="composer-input" @ref="composerElement" @bind="draft" @bind:event="oninput" @onkeydown="HandleComposerKeyDown" @onkeydown:preventDefault="true" placeholder="Ask Kai..." aria-label="Message for Kai" disabled="@(isSending || actionInFlight)"></textarea>
+            <div class="composer-footer"><span>MODE // AUTO</span><button class="hud-button" type="submit" disabled="@(isSending || actionInFlight || string.IsNullOrWhiteSpace(draft))">@(isSending ? "PROCESSING" : "SEND")</button></div>
         </form>
     </section>
 }
@@ -45,6 +47,10 @@ else
     private CancellationTokenSource? cancellation;
     private ConversationSummaryDto? conversation;
     private List<ConversationMessageDto> messages = [];
+    private List<ConversationPendingExecutionDto> pendingExecutions = [];
+    private readonly Dictionary<Guid, ConfirmationUiState> pendingStates = [];
+    private bool actionInFlight;
+    private string? executionResult;
     private ElementReference composerElement;
     private string draft = string.Empty;
     private string? loadError;
@@ -84,7 +90,7 @@ else
         if (!IsCurrent(generation)) return;
         if (!conversationResult.IsSuccess) { isLoading = false; isNotFound = conversationResult.Status == ConversationApiStatus.NotFound; loadError = MessageFor(conversationResult.Status); return; }
         conversation = conversationResult.Value;
-        await ReloadMessagesAsync(generation);
+        await ReloadMessagesAsync(generation); await ReloadPendingExecutionsAsync(generation);
         if (!IsCurrent(generation)) return;
         isLoading = false;
         if (focusComposer && loadError is null) await FocusComposerAsync();
@@ -97,6 +103,19 @@ else
         if (!result.IsSuccess) { loadError = MessageFor(result.Status); isNotFound = result.Status == ConversationApiStatus.NotFound; return; }
         messages = result.Value!.OrderBy(message => message.Sequence).ToList();
         hasOlder = messages.Count == PageSize;
+    }
+
+    private async Task ReloadPendingExecutionsAsync(int generation)
+    {
+        var result = await ConversationClient.GetPendingExecutionsAsync(ConversationId, cancellationToken: cancellation!.Token);
+        if (!IsCurrent(generation) || !result.IsSuccess) return;
+        pendingExecutions = result.Value!.GroupBy(value => value.PendingExecutionId).Select(group => group.First()).ToList();
+        foreach (var pending in pendingExecutions)
+        {
+            var refreshed = pending.Status switch { "Approved" => ConfirmationUiState.Approved, "Rejected" => ConfirmationUiState.Rejected, "Unavailable" => ConfirmationUiState.Unavailable, _ => ConfirmationUiState.Pending };
+            if (pendingStates.TryGetValue(pending.PendingExecutionId, out var current) && (current == ConfirmationUiState.ExecutedTransient || current == ConfirmationUiState.Uncertain && refreshed == ConfirmationUiState.Pending)) continue;
+            pendingStates[pending.PendingExecutionId] = refreshed;
+        }
     }
 
     private async Task LoadOlderAsync()
@@ -176,8 +195,29 @@ else
 
     private async Task ReloadAfterTurnAsync(int generation)
     {
-        await ReloadMessagesAsync(generation);
+        await ReloadMessagesAsync(generation); await ReloadPendingExecutionsAsync(generation);
         if (IsCurrent(generation)) await ConversationNotifier.RequestRefreshAsync();
+    }
+
+    private IEnumerable<ConversationPendingExecutionDto> PendingFor(ConversationMessageDto message) => pendingExecutions.Where(pending => pending.UserMessageId == message.Id || pending.AssistantMessageId == message.Id);
+    private ConfirmationUiState StateFor(ConversationPendingExecutionDto pending) => pendingStates.TryGetValue(pending.PendingExecutionId, out var state) ? state : ConfirmationUiState.Unavailable;
+    private bool HasActivePending => pendingExecutions.Any(pending => StateFor(pending) is ConfirmationUiState.Pending or ConfirmationUiState.Approved);
+    private async Task ApproveAsync(ConversationPendingExecutionDto pending) => await DecideAsync(pending, true);
+    private async Task RejectAsync(ConversationPendingExecutionDto pending) => await DecideAsync(pending, false);
+    private async Task DecideAsync(ConversationPendingExecutionDto pending, bool approve)
+    {
+        if (actionInFlight) return; actionInFlight = true; pendingStates[pending.PendingExecutionId] = approve ? ConfirmationUiState.Approving : ConfirmationUiState.Rejecting;
+        var result = approve ? await ExecutionClient.ApproveAsync(pending.PendingExecutionId, cancellation!.Token) : await ExecutionClient.RejectAsync(pending.PendingExecutionId, cancellation!.Token);
+        if (result.Status == KernelOS.Web.Execution.ExecutionApiStatus.NetworkUncertain) pendingStates[pending.PendingExecutionId] = ConfirmationUiState.Uncertain;
+        await ReloadPendingExecutionsAsync(requestGeneration); actionInFlight = false;
+    }
+    private async Task ExecuteAsync(ConversationPendingExecutionDto pending)
+    {
+        if (actionInFlight || StateFor(pending) != ConfirmationUiState.Approved) return; actionInFlight = true; pendingStates[pending.PendingExecutionId] = ConfirmationUiState.Executing;
+        var result = await ExecutionClient.ExecuteAsync(pending.PendingExecutionId, cancellation!.Token);
+        executionResult = result.IsSuccess ? $"EXECUTION COMPLETED // {result.Value!.CompletedTaskCount}/{result.Value.TotalTaskCount}" : result.Status == KernelOS.Web.Execution.ExecutionApiStatus.NetworkUncertain ? "Execution state is uncertain." : "Execution could not be completed.";
+        if (result.IsSuccess) pendingStates[pending.PendingExecutionId] = ConfirmationUiState.ExecutedTransient; else if (result.Status == KernelOS.Web.Execution.ExecutionApiStatus.NetworkUncertain) pendingStates[pending.PendingExecutionId] = ConfirmationUiState.Uncertain;
+        await ReloadPendingExecutionsAsync(requestGeneration); actionInFlight = false;
     }
 
     private async Task HandleComposerKeyDown(KeyboardEventArgs args)

@@ -10,7 +10,7 @@ La plataforma también incluye Memory durable local, mantenimiento incremental e
 
 ## Límites actuales
 
-No hay idempotencia HTTP durable, correlación persistente pending/conversation, indexación semántica de conversaciones, streaming, Markdown, acciones de confirmation desde UI, autenticación multiusuario, scheduler, proveedores cloud ni UI administrativa de Tools, Memory o Knowledge.
+No hay idempotencia HTTP durable, persistencia de Pending/Approval ni estado terminal durable de ejecución. Existe correlación durable pending/conversation para UX, pero tras restart el pending es no disponible. Tampoco hay indexación semántica de conversaciones, streaming, Markdown, autenticación multiusuario, scheduler, proveedores cloud ni UI administrativa de Tools, Memory o Knowledge.
 
 El historial durable vive en SQLite. Borradores, citas, metadata de respuesta, confirmations y respuestas parciales no persistidas viven solo en memoria del navegador y pueden desaparecer al recargar.
 

@@ -11,7 +11,7 @@ namespace KernelOS.Tests;
 public sealed class SqliteConversationStoreTests
 {
     [Fact]
-    public async Task VersionOneDatabaseMigratesToVersionTwoWithoutChangingMemoryData()
+    public async Task VersionOneDatabaseMigratesToCurrentVersionWithoutChangingMemoryData()
     {
         await using var fixture = await MigrationFixture.CreateAsync();
         await fixture.ExecuteAsync("CREATE TABLE memory_documents (id TEXT PRIMARY KEY NOT NULL, content TEXT NOT NULL); INSERT INTO memory_documents VALUES ('memory-1', 'intact'); CREATE TABLE schema_version (singleton INTEGER PRIMARY KEY CHECK (singleton = 1), version INTEGER NOT NULL); INSERT INTO schema_version VALUES (1, 1);");
@@ -19,7 +19,7 @@ public sealed class SqliteConversationStoreTests
         await fixture.Initializer.InitializeAsync();
 
         Assert.Equal("intact", await fixture.ScalarAsync("SELECT content FROM memory_documents WHERE id = 'memory-1';"));
-        Assert.Equal(2L, Convert.ToInt64(await fixture.ScalarAsync("SELECT version FROM schema_version WHERE singleton = 1;"), CultureInfo.InvariantCulture));
+        Assert.Equal(3L, Convert.ToInt64(await fixture.ScalarAsync("SELECT version FROM schema_version WHERE singleton = 1;"), CultureInfo.InvariantCulture));
         Assert.Equal(1L, Convert.ToInt64(await fixture.ScalarAsync("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'conversation_messages';"), CultureInfo.InvariantCulture));
         await fixture.Initializer.InitializeAsync();
     }

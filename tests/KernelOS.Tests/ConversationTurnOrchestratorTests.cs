@@ -1,4 +1,5 @@
 using KernelOS.Core.Conversation;
+using KernelOS.Core.Execution;
 using KernelOS.Core.Kai;
 using KernelOS.Infrastructure.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -110,8 +111,54 @@ public sealed class ConversationTurnOrchestratorTests
         Assert.DoesNotContain(requestB.History!, turn => turn.Content == "SECRET_A"); Assert.DoesNotContain(requestA.History!, turn => turn.Content == "SECRET_B");
     }
 
-    private static ConversationTurnOrchestrator Create(FakeStore store, FakeKai kai) => new(store, kai, NullLogger<ConversationTurnOrchestrator>.Instance);
+    [Fact]
+    public async Task ConfirmationRegistersExactUserAndNullAssistantWithoutCreatingAnotherPending()
+    {
+        var id = Guid.NewGuid(); var store = new FakeStore(id); var correlations = new FakeCorrelationStore(); var pendingId = Guid.NewGuid();
+        var result = await Create(store, new FakeKai((_, _) => Task.FromResult(Confirmation(pendingId))), correlations).HandleAsync(new(id, "user"));
+
+        Assert.Equal(ConversationTurnStatus.ConfirmationRequired, result.Status);
+        Assert.Single(correlations.Registrations);
+        Assert.Equal(pendingId, correlations.Registrations[0].PendingExecutionId);
+        Assert.Equal(store.Messages.Single(message => message.Role == ConversationRole.User).Id, correlations.Registrations[0].UserMessageId);
+        Assert.Null(correlations.Registrations[0].AssistantMessageId);
+        Assert.Single(store.Messages);
+    }
+
+    [Fact]
+    public async Task VisibleConfirmationRegistersExactPersistedAssistantAndNonConfirmationDoesNotRegister()
+    {
+        var id = Guid.NewGuid(); var store = new FakeStore(id); var correlations = new FakeCorrelationStore(); var pendingId = Guid.NewGuid();
+        var confirmed = await Create(store, new FakeKai((_, _) => Task.FromResult(Confirmation(pendingId, "confirmation"))), correlations).HandleAsync(new(id, "user"));
+        var normal = await Create(store, new FakeKai((_, _) => Task.FromResult(Success("answer"))), correlations).HandleAsync(new(id, "next"));
+
+        Assert.Equal(ConversationTurnStatus.ConfirmationRequired, confirmed.Status);
+        Assert.Equal(ConversationTurnStatus.Success, normal.Status);
+        Assert.Single(correlations.Registrations);
+        Assert.Equal(confirmed.AssistantMessageId, correlations.Registrations[0].AssistantMessageId);
+        Assert.Equal(store.Messages.Single(message => message.Id == confirmed.AssistantMessageId).Id, correlations.Registrations[0].AssistantMessageId);
+    }
+
+    [Theory]
+    [InlineData(ConversationExecutionCorrelationStatus.Failed, "CONVERSATION_PENDING_CORRELATION_FAILED")]
+    [InlineData(ConversationExecutionCorrelationStatus.Cancelled, "CONVERSATION_PENDING_CORRELATION_FAILED")]
+    [InlineData(ConversationExecutionCorrelationStatus.Conflict, "CONVERSATION_PENDING_CORRELATION_CONFLICT")]
+    public async Task CorrelationFailureOrConflictPreservesConfirmationAndAddsSafeWarning(ConversationExecutionCorrelationStatus registrationStatus, string expectedWarning)
+    {
+        var id = Guid.NewGuid(); var store = new FakeStore(id); var correlations = new FakeCorrelationStore { RegisterStatus = registrationStatus }; var pendingId = Guid.NewGuid();
+        var result = await Create(store, new FakeKai((_, _) => Task.FromResult(Confirmation(pendingId))), correlations).HandleAsync(new(id, "user"));
+
+        Assert.Equal(ConversationTurnStatus.ConfirmationRequired, result.Status);
+        Assert.Equal(KaiStatus.RequiresConfirmation, result.KaiResponse!.Status);
+        Assert.Equal(pendingId, result.KaiResponse.PendingExecutionId);
+        Assert.Equal(expectedWarning, result.ErrorCode);
+        Assert.Contains(result.KaiResponse.Warnings!, warning => warning.Code == expectedWarning);
+        Assert.Single(correlations.Registrations);
+    }
+
+    private static ConversationTurnOrchestrator Create(FakeStore store, FakeKai kai, FakeCorrelationStore? correlations = null) => new(store, kai, correlations ?? new FakeCorrelationStore(), NullLogger<ConversationTurnOrchestrator>.Instance);
     private static KaiResponse Success(string message) => new(KaiStatus.Success, KaiMode.Chat, message.StartsWith("User", StringComparison.Ordinal) ? "Assistant" + message[4..] : "answer");
+    private static KaiResponse Confirmation(Guid pendingExecutionId, string answer = "") => new(KaiStatus.RequiresConfirmation, KaiMode.Planner, answer, PendingExecutionId: pendingExecutionId, Confirmation: new(pendingExecutionId, Guid.NewGuid(), Guid.NewGuid(), "write", "Confirmation required.", ExecutionRiskLevel.High, ExecutionPolicyReason.SideEffectRequiresConfirmation, "Arguments are not displayed by default.", DateTimeOffset.UtcNow.AddMinutes(5)));
 
     private sealed class FakeKai(Func<KaiRequest, CancellationToken, Task<KaiResponse>> handle) : IKaiAgent
     {
@@ -142,5 +189,19 @@ public sealed class ConversationTurnOrchestratorTests
         }
         public Task<ConversationDeleteResult> DeleteAsync(Guid conversationId, CancellationToken cancellationToken = default) => Task.FromResult(new ConversationDeleteResult(ConversationStatus.Success));
         public void Seed(Guid id, params string[] content) { foreach (var value in content) { var role = value.StartsWith("Assistant", StringComparison.Ordinal) ? ConversationRole.Assistant : ConversationRole.User; Messages.Add(new(Guid.NewGuid(), id, Messages.Count(message => message.ConversationId == id) + 1, role, value, DateTimeOffset.UtcNow)); } }
+    }
+
+    private sealed class FakeCorrelationStore : IConversationExecutionCorrelationStore
+    {
+        public List<RegisterConversationExecutionCorrelationRequest> Registrations { get; } = [];
+        public ConversationExecutionCorrelationStatus RegisterStatus { get; init; } = ConversationExecutionCorrelationStatus.Success;
+        public Task<ConversationExecutionCorrelationRegisterResult> RegisterAsync(RegisterConversationExecutionCorrelationRequest request, CancellationToken cancellationToken = default)
+        {
+            Registrations.Add(request);
+            var correlation = new ConversationExecutionCorrelation(request.PendingExecutionId, request.ConversationId, request.UserMessageId, request.AssistantMessageId, DateTimeOffset.UtcNow);
+            return Task.FromResult(new ConversationExecutionCorrelationRegisterResult(RegisterStatus, RegisterStatus == ConversationExecutionCorrelationStatus.Success ? correlation : null));
+        }
+        public Task<ConversationExecutionCorrelationGetResult> GetByPendingExecutionIdAsync(Guid pendingExecutionId, CancellationToken cancellationToken = default) => Task.FromResult(new ConversationExecutionCorrelationGetResult(ConversationExecutionCorrelationStatus.NotFound));
+        public Task<ConversationExecutionCorrelationListResult> ListByConversationAsync(ConversationExecutionCorrelationListQuery query, CancellationToken cancellationToken = default) => Task.FromResult(new ConversationExecutionCorrelationListResult(ConversationExecutionCorrelationStatus.Success, []));
     }
 }

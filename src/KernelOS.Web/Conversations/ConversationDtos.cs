@@ -24,6 +24,7 @@ public sealed record ConversationTurnDto(
     string? ErrorCode);
 
 public sealed record ConfirmationDto(Guid PendingExecutionId, string? Description, string? RiskLevel, string? Reason, string? SafeArgumentSummary, DateTimeOffset? ExpiresAt);
+public sealed record ConversationPendingExecutionDto(Guid PendingExecutionId, Guid UserMessageId, Guid? AssistantMessageId, DateTimeOffset CreatedAt, string? Status, ConfirmationDto? Confirmation);
 
 public enum ConversationApiStatus
 {
